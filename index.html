@@ -2,85 +2,347 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>README</title>
+  <title>The One File – README</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
   <style>
     :root {
       color-scheme: light dark;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #0b0b0c;
+      --bg-elevated: #111218;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --code-bg: #020617;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      padding: 1.5rem;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 60%, #000 100%);
+      color: var(--text);
       display: flex;
       justify-content: center;
+      padding: 1.5rem;
     }
 
-    main {
-      max-width: 960px;
+    .shell {
       width: 100%;
+      max-width: 960px;
+      border-radius: 1.25rem;
+      background: linear-gradient(145deg, rgba(148, 163, 184, 0.15), transparent);
+      padding: 1px;
+      box-shadow:
+        0 18px 60px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
     }
 
-    h1 {
-      font-size: 1.25rem;
-      margin-bottom: 0.75rem;
+    .inner {
+      border-radius: 1.2rem;
+      background: radial-gradient(circle at top left, #020617, #020617 38%, #020617 70%, #020617 100%);
+      padding: 1.5rem 1.75rem 2.25rem;
     }
 
-    pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      border-radius: 0.75rem;
-      padding: 1rem 1.25rem;
-      border: 1px solid rgba(128, 128, 128, 0.35);
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent);
+      backdrop-filter: blur(20px);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+    }
+
+    .markdown-body {
+      border-radius: 1rem;
+      border: 1px solid var(--border-subtle);
+      padding: 1.25rem 1.5rem;
+      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.98));
       overflow-x: auto;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background: rgba(0, 0, 0, 0.02);
-    }
-
-    .error {
-      color: #c0392b;
+      line-height: 1.6;
       font-size: 0.95rem;
     }
+
+    .markdown-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #020617;
+    }
+
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3,
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+      font-weight: 650;
+      line-height: 1.3;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      scroll-margin-top: 5rem;
+    }
+
+    .markdown-body h1 {
+      font-size: 1.6rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.5rem;
+    }
+
+    .markdown-body h2 {
+      font-size: 1.35rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+      padding-bottom: 0.4rem;
+    }
+
+    .markdown-body h3 { font-size: 1.1rem; }
+    .markdown-body h4 { font-size: 1rem; }
+
+    .markdown-body p {
+      margin: 0.4rem 0 0.6rem;
+    }
+
+    .markdown-body a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(56, 189, 248, 0.5);
+    }
+
+    .markdown-body a:hover {
+      border-bottom-style: solid;
+    }
+
+    .markdown-body code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85em;
+      background: var(--code-bg);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.35rem;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+    }
+
+    .markdown-body pre {
+      background: var(--code-bg);
+      border-radius: 0.75rem;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+      border: 1px solid rgba(15, 23, 42, 0.95);
+    }
+
+    .markdown-body pre code {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      font-size: 0.85rem;
+    }
+
+    .markdown-body ul,
+    .markdown-body ol {
+      padding-left: 1.5rem;
+      margin: 0.4rem 0 0.7rem;
+    }
+
+    .markdown-body table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.8rem 0 1rem;
+      font-size: 0.9rem;
+      background: rgba(15, 23, 42, 0.85);
+    }
+
+    .markdown-body th,
+    .markdown-body td {
+      border: 1px solid rgba(75, 85, 99, 0.6);
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+    }
+
+    .markdown-body th {
+      background: rgba(15, 23, 42, 0.95);
+      font-weight: 600;
+    }
+
+    .markdown-body tr:nth-child(even) td {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .status {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    }
+
+    .status.error .status-dot {
+      background: #f97373;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0.75rem;
+      }
+
+      .inner {
+        padding: 1.1rem 1.1rem 1.75rem;
+      }
+
+      .markdown-body {
+        padding: 1rem 1.05rem;
+        border-radius: 0.9rem;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   </style>
+
+  <!-- In production, pin versions and add SRI hashes for both scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
 </head>
 <body>
-  <main>
-    <h1>README</h1>
-    <pre id="readme">Loading README…</pre>
-  </main>
+  <div class="shell">
+    <div class="inner">
+      <header>
+        <div class="title">The One File · README</div>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span>Rendered from README.md</span>
+        </div>
+      </header>
+
+      <article id="readme" class="markdown-body">
+        Loading README.md…
+      </article>
+
+      <div id="status" class="status">
+        <span class="status-dot"></span>
+        <span>Fetching README from this repository root.</span>
+      </div>
+    </div>
+  </div>
 
   <script>
     (function () {
       "use strict";
 
-      const target = document.getElementById("readme");
+      const readmeEl = document.getElementById("readme");
+      const statusEl = document.getElementById("status");
+
+      function setStatus(message, isError) {
+        if (!statusEl) return;
+        statusEl.textContent = "";
+        statusEl.classList.toggle("error", !!isError);
+
+        const dot = document.createElement("span");
+        dot.className = "status-dot";
+        const text = document.createElement("span");
+        text.textContent = message;
+
+        statusEl.appendChild(dot);
+        statusEl.appendChild(text);
+      }
 
       async function loadReadme() {
         try {
+          if (!window.marked || !window.DOMPurify) {
+            setStatus("Markdown renderer not ready. Check script loading.", true);
+            return;
+          }
+
+          setStatus("Loading README.md…", false);
+
           const response = await fetch("README.md", {
             method: "GET",
             cache: "no-cache",
+            headers: { "Accept": "text/plain, text/markdown;q=0.9,*/*;q=0.8" }
           });
 
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error("HTTP " + response.status);
           }
 
-          const text = await response.text();
-          // Use textContent to avoid injecting HTML (prevents XSS)
-          target.textContent = text || "README.md is empty.";
+          const markdown = await response.text();
+
+          if (!markdown.trim()) {
+            readmeEl.textContent = "README.md is empty.";
+            setStatus("Loaded README.md (empty file).", false);
+            return;
+          }
+
+          // Configure marked for GitHub-style markdown
+          if (typeof marked.setOptions === "function") {
+            marked.setOptions({
+              gfm: true,
+              breaks: false,
+              headerIds: true,
+              mangle: false
+            });
+          }
+
+          const rawHtml = marked.parse(markdown);
+          const safeHtml = DOMPurify.sanitize(rawHtml, {
+            USE_PROFILES: { html: true }
+          });
+
+          readmeEl.innerHTML = safeHtml;
+          setStatus("README.md loaded and rendered.", false);
         } catch (err) {
           console.error("Failed to load README:", err);
-          target.textContent = "";
-          const errorNode = document.createElement("div");
-          errorNode.className = "error";
-          errorNode.textContent = "Could not load README.md.";
-          target.parentNode.appendChild(errorNode);
+          readmeEl.textContent = "Could not load README.md.";
+          setStatus("Error loading README.md. See console for details.", true);
         }
       }
 
-      loadReadme();
+      window.addEventListener("load", loadReadme);
     })();
   </script>
 </body>
