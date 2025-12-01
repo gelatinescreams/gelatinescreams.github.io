@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>README</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    main {
+      max-width: 960px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid rgba(128, 128, 128, 0.35);
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .error {
+      color: #c0392b;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>README</h1>
+    <pre id="readme">Loading README…</pre>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const target = document.getElementById("readme");
+
+      async function loadReadme() {
+        try {
+          const response = await fetch("README.md", {
+            method: "GET",
+            cache: "no-cache",
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const text = await response.text();
+          // Use textContent to avoid injecting HTML (prevents XSS)
+          target.textContent = text || "README.md is empty.";
+        } catch (err) {
+          console.error("Failed to load README:", err);
+          target.textContent = "";
+          const errorNode = document.createElement("div");
+          errorNode.className = "error";
+          errorNode.textContent = "Could not load README.md.";
+          target.parentNode.appendChild(errorNode);
+        }
+      }
+
+      loadReadme();
+    })();
+  </script>
+</body>
+</html>
