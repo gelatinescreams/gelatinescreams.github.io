@@ -13,14 +13,15 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ![The One File](assets/corporate-preview.gif) ![The One File](assets/homelab-preview.gif) ![The One File](assets/mobilepreviews.jpg)
 
-## Version 3.9 : 12/4/25
+## Version 3.9.2 : 12/5/25
 
+* **NEW 3.9.2** Squashing bugs. See changes in the [changelog.md](changelog.md)
 * **NEW 3.9** Tabs, snapshots, action audits and notes! (encrypted also)
   * Tabs are now implemented. This allows unlimited locations of topologies, still one file!
 * **NEW 3.9** General topology notes are now implemented. You can also encrypt per note.
-* **NEW 3.9** Snapshots are now implemeted. Auto save and manual save is available.
-* **NEW 3.9** Action audits are now implemeted. This allows you to audit whether or not the file has been tampered in an easy to read log.
-  * *Note: Both snapshots and audits are local browser only and do not trasnfer to another device. This feature is coming in 4.0*
+* **NEW 3.9** Snapshots are now implemeted. Auto save and manual save are available.
+* **NEW 3.9** Action audits are now implemeted. This allows you to audit whether or not the file has been tampered with in an easy to read log.
+  * *Note: Both snapshots and audits are local browser only and do not transfer to another device. This feature is coming in 4.0*
 * **NEW 3.7** The Rackening!!
   * Add any rack size from 6-48 and open it as its own canvas with U slot placement of nodes, new and existing, enabling unlimited hierarchical rack layouts.
 * **NEW 3.7** Layers upon layers!!
@@ -33,7 +34,8 @@ A fully self contained topology builder that runs anywhere as a single standalon
   * Choose between physical, logical, security and application layers for anything and easily toggle visibility between them.
 * **NEW 3.7** Added Racks and individual rack canvasses!
 * **NEW 3.7** *Major workflow enhancement release with full keyboard control and mobile optimization*
- 
+  * See more changes in the [changelog.md](changelog.md)
+  
 # Demos
 
 * **Core Edition**
