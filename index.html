@@ -11,16 +11,32 @@ doyouknowtheprotonman@proton.me
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
   <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #0b0b0c;
-      --bg-elevated: #111218;
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-      --accent: #38bdf8;
-      --code-bg: #020617;
-    }
+	:root {
+	  color-scheme: light dark;
+	  --transition: 0.25s ease;
+	}
+
+	/* Default: Dark */
+	:root[data-theme="dark"] {
+	  --bg: #0b0b0c;
+	  --bg-elevated: #111218;
+	  --border-subtle: rgba(255, 255, 255, 0.08);
+	  --text: #f3f4f6;
+	  --muted: #9ca3af;
+	  --accent: #38bdf8;
+	  --code-bg: #020617;
+	}
+
+	/* Light Mode */
+	:root[data-theme="light"] {
+	  --bg: #ffffff;
+	  --bg-elevated: #f7f7f8;
+	  --border-subtle: rgba(0, 0, 0, 0.12);
+	  --text: #111111;
+	  --muted: #4b5563;
+	  --accent: #0ea5e9;
+	  --code-bg: #eef2f7;
+	}
 
     * {
       box-sizing: border-box;
@@ -30,7 +46,8 @@ doyouknowtheprotonman@proton.me
       margin: 0;
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 60%, #000 100%);
+      background: var(--bg);
+      transition: background var(--transition), color var(--transition);
       color: var(--text);
       display: flex;
       justify-content: center;
@@ -347,5 +364,34 @@ doyouknowtheprotonman@proton.me
       window.addEventListener("load", loadReadme);
     })();
   </script>
+  <script>
+(() => {
+  "use strict";
+
+  const root = document.documentElement;
+  const toggleBtn = document.getElementById("theme-toggle");
+
+  const saved = localStorage.getItem("theme");
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  // Default = dark
+  const current = saved || (systemDark ? "dark" : "dark");
+
+  root.setAttribute("data-theme", current);
+  updateBtn(current);
+
+  toggleBtn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    updateBtn(next);
+  });
+
+  function updateBtn(theme) {
+    toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
+  }
+})();
+</script>
+
 </body>
 </html>
