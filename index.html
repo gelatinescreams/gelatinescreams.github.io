@@ -273,9 +273,21 @@ doyouknowtheprotonman@proton.me
     <div class="inner">
       <header>
         <div class="title">The One File · README</div>
-        <div class="badge">
-          <span class="badge-dot"></span>
-          <span>Rendered from README.md</span>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <button id="theme-toggle" style="
+            font-size: 0.75rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: var(--accent);
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent);
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+          ">Dark Mode</button>
+          <div class="badge">
+            <span class="badge-dot"></span>
+            <span>Rendered from README.md</span>
+          </div>
         </div>
       </header>
 
@@ -374,7 +386,6 @@ doyouknowtheprotonman@proton.me
   const saved = localStorage.getItem("theme");
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  // Default = dark
   const current = saved || (systemDark ? "dark" : "dark");
 
   root.setAttribute("data-theme", current);
