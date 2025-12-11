@@ -13,9 +13,8 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ![The One File](assets/corporate-preview.gif) ![The One File](assets/homelab-preview.gif) ![The One File](assets/mobilepreviews.jpg)
 
-### Version 3.9.9 : 12/10/25
+### Version 3.9.9.1 : 12/10/25 Getting close to 4.0 Stable!
 
-* **Getting closer to 4.0 Stable!**
 * **Added View Only Mode in Settings** Disables all editing while keeping pan and zoom
 * * Click or tap any canvas item five times to inspect its details while in View Only Mode
 * **Upgraded and fixed the Audit log.** Moved it to the stored JSON. Audit log now transfers with the save!
@@ -67,10 +66,10 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ### Download:
 
-* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24088455/the-one-file-corporate-demo.html)
-* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24088456/the-one-file-homelab-demo.html)
-* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24088457/theonefile-networkening-corporate-demo.html)
-* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24088458/theonefile-networkening-homelab-demo.html)
+* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24092641/the-one-file-corporate-demo.html)
+* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24092645/the-one-file-homelab-demo.html)
+* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24092646/theonefile-networkening-corporate-demo.html)
+* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24092648/theonefile-networkening-homelab-demo.html)
 
 ### Why It Exists
 
