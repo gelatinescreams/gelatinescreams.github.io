@@ -8450,128 +8450,30 @@
   "encryptedSections": {},
   "auditLog": [
     {
-      "timestamp": 1765476630816,
+      "timestamp": 1765750156571,
       "type": "save",
       "description": "File saved: the-one-file.html",
       "details": {},
       "tab": "Homelab 2"
     },
     {
-      "timestamp": 1765476627316,
+      "timestamp": 1765750152975,
       "type": "tab",
       "description": "Switched to tab: Homelab 2",
       "details": {},
       "tab": "Homelab 2"
     },
     {
-      "timestamp": 1765476621165,
+      "timestamp": 1765750148194,
       "type": "save",
       "description": "File saved: the-one-file-corporate.html",
       "details": {},
       "tab": "Corporate Site B"
     },
     {
-      "timestamp": 1765476612712,
+      "timestamp": 1765750131748,
       "type": "save",
       "description": "File saved: the-one-file-corporate.html",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765476610218,
-      "type": "import",
-      "description": "Imported JSON: the-one-file-corporate-demo.json (105 nodes, 64 connections)",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402929770,
-      "type": "tab",
-      "description": "Switched to tab: Corporate Site B",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402922300,
-      "type": "export",
-      "description": "Exported JSON: the-one-file-data-2025-12-10.json",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402914493,
-      "type": "save",
-      "description": "File saved: the-one-file.html",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402910921,
-      "type": "tab",
-      "description": "Switched to tab: Homelab 2",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402904206,
-      "type": "save",
-      "description": "File saved: the-one-file-corporate.html",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402899387,
-      "type": "import",
-      "description": "Imported JSON: the-one-file-corporate-demo.json (105 nodes, 64 connections)",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402888416,
-      "type": "save",
-      "description": "File saved: the-one-file-corporate.html",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402884873,
-      "type": "tab",
-      "description": "Switched to tab: Corporate Site B",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402878108,
-      "type": "save",
-      "description": "File saved: the-one-file.html",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402866440,
-      "type": "save",
-      "description": "File saved: the-one-file.html",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402865008,
-      "type": "tab",
-      "description": "Switched to tab: Homelab 2",
-      "details": {},
-      "tab": "Homelab 2"
-    },
-    {
-      "timestamp": 1765402860428,
-      "type": "save",
-      "description": "File saved: the-one-file-corporate.html",
-      "details": {},
-      "tab": "Corporate Site B"
-    },
-    {
-      "timestamp": 1765402858103,
-      "type": "import",
-      "description": "Imported JSON: theonefile-networkening-corporate-demo.json (105 nodes, 65 connections)",
       "details": {},
       "tab": "Corporate Site B"
     }
@@ -8711,15 +8613,11 @@
             }
           }
         },
-        updateLayout() {
-          const main = document.querySelector("main");
-          if (!main) return;
-        },
         updateCanvasHint() {
       const hint = document.getElementById("canvas-hint");
       if (!hint) return;
       if (PAGE_STATE.canvasHintText !== undefined && PAGE_STATE.canvasHintText !== "") {
-        hint.innerHTML = PAGE_STATE.canvasHintText;
+        hint.textContent = PAGE_STATE.canvasHintText;
         return;
       }
       const items = this.isMobile
@@ -8779,8 +8677,7 @@
           this.detect();
           this.applyInitialCollapse();
           this.updateBulkToolbar();
-          this.updateLayout();
-          this.updateCanvasHint();
+		  this.updateCanvasHint();
           this.autoSelectStyleScope();
           this.updateToolbarStack();
           this.updateLayoutControls();
@@ -8788,6 +8685,12 @@
       };
       function isMobileDevice() {
         return MobileManager.isMobile;
+      }
+	  function escapeHtml(str) {
+       if (!str) return '';
+       return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+       }[c]));
       }
       function u8ToBase64(u8) {
       let binary = "";
@@ -9422,7 +9325,7 @@
        if (backBtn) backBtn.style.display = "inline-block";
        const hint = document.getElementById("canvas-hint");
        if (hint) {
-        hint.textContent = `Viewing: ${NODE_DATA[rackId].name} | Double click empty space to exit`;
+        hint.textContent = `Viewing: ${NODE_DATA[rackId]?.name || 'Rack'} | Double click empty space to exit`;
         hint.classList.add("visible");
        }
       const rackUHeight = getRackUHeight(rackId);
@@ -11153,6 +11056,7 @@
       handle.style.strokeWidth = "2";
       handle.style.cursor = corner.cursor;
       handle.addEventListener("mousedown", (e) => {
+	  if (isViewOnly()) return;
       e.preventDefault();
       e.stopPropagation();
 	  pushUndo("resize zone");
@@ -11422,6 +11326,7 @@
       let lineDragStartX, lineDragStartY;
       let linePointsStart = [];
       polyHit.addEventListener("mousedown", (e) => {
+	  if (isViewOnly()) return;
       if (freeDrawMode) return;
       e.preventDefault();
       e.stopPropagation();
@@ -11529,6 +11434,7 @@
             document.addEventListener("mouseup", upHandler);
            });
            c.addEventListener("touchstart", (e) => {
+		   if (isViewOnly()) return;
             e.preventDefault();
             e.stopPropagation();
             pushUndo("edit edge point");
@@ -12732,33 +12638,32 @@
        modal.classList.add("active");
        input.focus();
        input.select();
+       const cleanup = () => {
+        modal.classList.remove("active");
+        saveBtn.removeEventListener("click", handleSave);
+        cancelBtn.removeEventListener("click", handleCancel);
+        input.removeEventListener("keypress", handleEnter);
+        modal.removeEventListener("click", bgHandler);
+       };
        const handleSave = () => {
         if (input.value.trim()) {
          onSave(input.value.trim());
         }
-        modal.classList.remove("active");
-        saveBtn.removeEventListener("click", handleSave);
-        cancelBtn.removeEventListener("click", handleCancel);
-        input.removeEventListener("keypress", handleEnter);
+        cleanup();
        };
        const handleCancel = () => {
-        modal.classList.remove("active");
-        saveBtn.removeEventListener("click", handleSave);
-        cancelBtn.removeEventListener("click", handleCancel);
-        input.removeEventListener("keypress", handleEnter);
+        cleanup();
        };
        const handleEnter = (e) => {
         if (e.key === "Enter") handleSave();
        };
+       const bgHandler = (e) => {
+        if (e.target === modal) handleCancel();
+       };
        saveBtn.addEventListener("click", handleSave);
        cancelBtn.addEventListener("click", handleCancel);
        input.addEventListener("keypress", handleEnter);
-       modal.addEventListener("click", function bgHandler(e) {
-        if (e.target === modal) {
-         handleCancel();
-         modal.removeEventListener("click", bgHandler);
-        }
-       });
+       modal.addEventListener("click", bgHandler);
       }
       function challengeTheImmortal(message, onConfirm) {
        const modal = document.getElementById("confirm-modal");
@@ -12767,25 +12672,25 @@
        const cancelBtn = document.getElementById("confirm-cancel");
        messageEl.textContent = message;
        modal.classList.add("active");
+	   const cleanup = () => {
+        modal.classList.remove("active");
+        deleteBtn.removeEventListener("click", handleConfirm);
+        cancelBtn.removeEventListener("click", handleCancel);
+        modal.removeEventListener("click", bgHandler);
+       };
        const handleConfirm = () => {
         onConfirm();
-        modal.classList.remove("active");
-        deleteBtn.removeEventListener("click", handleConfirm);
-        cancelBtn.removeEventListener("click", handleCancel);
+        cleanup();
        };
        const handleCancel = () => {
-        modal.classList.remove("active");
-        deleteBtn.removeEventListener("click", handleConfirm);
-        cancelBtn.removeEventListener("click", handleCancel);
+        cleanup();
+       };
+       const bgHandler = (e) => {
+        if (e.target === modal) handleCancel();
        };
        deleteBtn.addEventListener("click", handleConfirm);
        cancelBtn.addEventListener("click", handleCancel);
-       modal.addEventListener("click", function bgHandler(e) {
-        if (e.target === modal) {
-         handleCancel();
-         modal.removeEventListener("click", bgHandler);
-        }
-       });
+       modal.addEventListener("click", bgHandler);
       }
       const pageTitleEl = document.getElementById("page-title");
       if (pageTitleEl) {
@@ -12892,12 +12797,23 @@
         if (isRack) {
          const nodesInRack = Object.entries(NODE_DATA).filter(([nid, n]) => n.assignedRack === id);
          if (nodesInRack.length > 0) {
-          rackContentsList.innerHTML = nodesInRack.map(([nid, n]) => {
-           const tags = (n.tags || []).map(t => `<span style="background: var(--accent); color: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px;">${t}</span>`).join('');
-           return `<div style="padding: 6px 0; border-bottom: 1px solid var(--edge-main); cursor: pointer;" onclick="claimTheImmortal('${nid}')">
-            <span style="color: var(--text-main);">${n.name}</span>${tags}
-           </div>`;
-          }).join('');
+          rackContentsList.innerHTML = '';
+          nodesInRack.forEach(([nid, n]) => {
+           const div = document.createElement('div');
+           div.style.cssText = 'padding: 6px 0; border-bottom: 1px solid var(--edge-main); cursor: pointer;';
+           div.onclick = () => claimTheImmortal(nid);
+           const nameSpan = document.createElement('span');
+           nameSpan.style.color = 'var(--text-main)';
+           nameSpan.textContent = n.name;
+           div.appendChild(nameSpan);
+           (n.tags || []).forEach(t => {
+            const tagSpan = document.createElement('span');
+            tagSpan.style.cssText = 'background: var(--accent); color: var(--bg); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px;';
+            tagSpan.textContent = t;
+            div.appendChild(tagSpan);
+           });
+           rackContentsList.appendChild(div);
+          });
           rackContentsSection.style.display = "block";
          } else {
           rackContentsList.innerHTML = '<div style="color: var(--text-soft); font-style: italic;">No nodes assigned</div>';
@@ -14549,7 +14465,7 @@
        if (!currentTextId) return;
        const textItem = TEXT_DATA.list.find(t => t.id === currentTextId);
        if (textItem) {
-        challengeTheImmortal(`Delete text "${textItem.content.substring(0, 30)}..."?`, () => {
+        challengeTheImmortal(`Delete text "${(textItem.content || '').substring(0, 30)}..."?`, () => {
          deleteText(currentTextId);
         });
        }
@@ -15393,61 +15309,65 @@
        if (!node) return;
        document.getElementById("modal-title").textContent = "Edit Rack Unit";
        document.getElementById("modal-input").value = node.rackUnit || "";
-       document.getElementById("edit-modal").style.display = "flex";
+       document.getElementById("edit-modal").style.display = "";
+       document.getElementById("edit-modal").classList.add("active");
        document.getElementById("modal-input").focus();
+	   const modal = document.getElementById("edit-modal");
+       const cleanup = () => {
+        modal.classList.remove("active");
+        document.getElementById("modal-save").removeEventListener("click", saveHandler);
+        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
+        modal.removeEventListener("click", bgHandler);
+       };
        const saveHandler = () => {
         pushUndo("edit rack");
         const value = document.getElementById("modal-input").value.trim();
         node.rackUnit = value;
-        document.getElementById("edit-modal").style.display = "none";
+        cleanup();
         claimTheImmortal(id);
-        document.getElementById("modal-save").removeEventListener("click", saveHandler);
-        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
        };
        const cancelHandler = () => {
-        document.getElementById("edit-modal").style.display = "none";
-        document.getElementById("modal-save").removeEventListener("click", saveHandler);
-        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
+        cleanup();
+       };
+       const bgHandler = (e) => {
+        if (e.target === modal) cancelHandler();
        };
        document.getElementById("modal-save").addEventListener("click", saveHandler);
        document.getElementById("modal-cancel").addEventListener("click", cancelHandler);
-       document.getElementById("edit-modal").addEventListener("click", function bgHandler(e) {
-        if (e.target === document.getElementById("edit-modal")) {
-         cancelHandler();
-         document.getElementById("edit-modal").removeEventListener("click", bgHandler);
-        }
-       });
+       modal.addEventListener("click", bgHandler);
       }
       function editNodeUHeight(id) {
        const node = NODE_DATA[id];
        if (!node) return;
        document.getElementById("modal-title").textContent = "Edit U Height";
        document.getElementById("modal-input").value = node.uHeight || "1";
-       document.getElementById("edit-modal").style.display = "flex";
+       document.getElementById("edit-modal").style.display = "";
+       document.getElementById("edit-modal").classList.add("active");
        document.getElementById("modal-input").focus();
+	   const modal = document.getElementById("edit-modal");
+       const cleanup = () => {
+        modal.classList.remove("active");
+        document.getElementById("modal-save").removeEventListener("click", saveHandler);
+        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
+        modal.removeEventListener("click", bgHandler);
+       };
        const saveHandler = () => {
         pushUndo("edit U height");
         const value = document.getElementById("modal-input").value.trim();
         node.uHeight = value;
-        document.getElementById("edit-modal").style.display = "none";
+        cleanup();
         claimTheImmortal(id);
         forgeTheTopology();
-        document.getElementById("modal-save").removeEventListener("click", saveHandler);
-        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
        };
        const cancelHandler = () => {
-        document.getElementById("edit-modal").style.display = "none";
-        document.getElementById("modal-save").removeEventListener("click", saveHandler);
-        document.getElementById("modal-cancel").removeEventListener("click", cancelHandler);
+        cleanup();
+       };
+       const bgHandler = (e) => {
+        if (e.target === modal) cancelHandler();
        };
        document.getElementById("modal-save").addEventListener("click", saveHandler);
        document.getElementById("modal-cancel").addEventListener("click", cancelHandler);
-       document.getElementById("edit-modal").addEventListener("click", function bgHandler(e) {
-        if (e.target === document.getElementById("edit-modal")) {
-         cancelHandler();
-         document.getElementById("edit-modal").removeEventListener("click", bgHandler);
-        }
-       });
+       modal.addEventListener("click", bgHandler);
       }
       function updateEdgePortLabels(edgeId) {
        const edge = EDGE_DATA.list.find(e => e.id === edgeId);
@@ -16286,7 +16206,7 @@
         } else if (currentTextId) {
          const textItem = TEXT_DATA.list.find(t => t.id === currentTextId);
          if (textItem) {
-          challengeTheImmortal(`Delete text "${textItem.content.substring(0, 30)}..."?`, () => {
+          challengeTheImmortal(`Delete text "${(textItem.content || '').substring(0, 30)}..."?`, () => {
            pushUndo("delete text");
            TEXT_DATA.list = TEXT_DATA.list.filter(t => t.id !== currentTextId);
            currentTextId = null;
@@ -16389,8 +16309,8 @@
           return `
             <div class="version-item" onclick="restoreRollbackVersion(${index})">
               <div class="version-info">
-                <div class="timestamp">${timeStr}</div>
-                <div class="details">${version.description} • ${nodeCount} nodes • ${edgeCount} connections</div>
+                <div class="timestamp">${escapeHtml(timeStr)}</div>
+                <div class="details">${escapeHtml(version.description)} • ${nodeCount} nodes • ${edgeCount} connections</div>
               </div>
               <div class="version-actions">
                 <button class="btn-cancel" onclick="event.stopPropagation(); deleteRollbackVersion(${index})" title="Delete this version">🗑️</button>
@@ -16560,7 +16480,7 @@
           const isActive = index === currentTabIndex;
           return `
             <div class="tab-item ${isActive ? 'active' : ''}" onclick="switchTab(${index})">
-              <div class="tab-name">${tab.name}</div>
+              <div class="tab-name">${escapeHtml(tab.name)}</div>
               <div class="tab-stats">${nodeCount} nodes • ${edgeCount} connections</div>
               <div class="tab-actions">
                 <button class="btn-cancel" onclick="event.stopPropagation(); renameTab(${index})" title="Rename tab">✏️</button>
@@ -16639,9 +16559,9 @@
           const date = new Date(event.timestamp);
           const timeStr = date.toLocaleString();
           return `
-            <div class="audit-entry ${event.type}">
-              <div class="time">[${timeStr}] ${event.tab}</div>
-              <div class="action">[${event.type.toUpperCase()}] ${event.description}</div>
+            <div class="audit-entry ${escapeHtml(event.type)}">
+              <div class="time">[${escapeHtml(timeStr)}] ${escapeHtml(event.tab)}</div>
+              <div class="action">[${escapeHtml(event.type.toUpperCase())}] ${escapeHtml(event.description)}</div>
             </div>
           `;
         }).join('');
@@ -16772,11 +16692,11 @@
           const status = section.encrypted ? "🔒 Encrypted" : "🔓 Plaintext";
           return `
             <div class="secret-item">
-              <div class="secret-name">${name}</div>
+              <div class="secret-name">${escapeHtml(name)}</div>
               <div class="secret-status">${status}</div>
               <div class="tab-actions">
-                <button class="btn-cancel" onclick="editSecret('${name}')" title="Edit note">✏️</button>
-                <button class="btn-cancel" onclick="deleteSecret('${name}')" title="Delete note">🗑️</button>
+                <button class="btn-cancel" onclick="editSecret('${escapeHtml(name)}')" title="Edit note">✏️</button>
+                <button class="btn-cancel" onclick="deleteSecret('${escapeHtml(name)}')" title="Delete note">🗑️</button>
               </div>
             </div>
           `;
@@ -16829,7 +16749,7 @@
           shape: "server",
           role: "",
           tags: [],
-          notes: "",
+          notes: [],
           layer: "physical",
           isRack: false
         };
@@ -16849,7 +16769,7 @@
           shape: "server",
           role: "rack",
           tags: [],
-          notes: "",
+          notes: [],
           layer: "physical",
           isRack: true,
           rackCapacity: 42
@@ -17001,7 +16921,7 @@
           const fromName = NODE_DATA[e.from]?.name || e.from;
           const toName = NODE_DATA[e.to]?.name || e.to;
           const notes = (e.notes || []).join(", ");
-          html += `<tr style="border-bottom: 1px solid var(--edge-main);"><td style="padding: 10px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('port-map-modal').classList.remove('active'); claimTheImmortal('${e.from}'); focusOnSelected()">${fromName}</td><td style="padding: 10px; font-family: monospace; color: var(--accent); cursor: pointer;" onclick="document.getElementById('port-map-modal').classList.remove('active'); selectTheConnection('${e.id}'); focusOnSelected()">${e.fromPort || "-"}</td><td style="padding: 10px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('port-map-modal').classList.remove('active'); claimTheImmortal('${e.to}'); focusOnSelected()">${toName}</td><td style="padding: 10px; font-family: monospace; color: var(--accent); cursor: pointer;" onclick="document.getElementById('port-map-modal').classList.remove('active'); selectTheConnection('${e.id}'); focusOnSelected()">${e.toPort || "-"}</td><td style="padding: 10px; color: var(--text-soft); font-size: 12px;">${notes || "-"}</td></tr>`;
+          html += `<tr style="border-bottom: 1px solid var(--edge-main);"><td style="padding: 10px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('port-map-modal').classList.remove('active'); claimTheImmortal('${escapeHtml(e.from)}'); focusOnSelected()">${escapeHtml(fromName)}</td><td style="padding: 10px; font-family: monospace; color: var(--accent); cursor: pointer;" onclick="document.getElementById('port-map-modal').classList.remove('active'); selectTheConnection('${escapeHtml(e.id)}'); focusOnSelected()">${escapeHtml(e.fromPort) || "-"}</td><td style="padding: 10px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('port-map-modal').classList.remove('active'); claimTheImmortal('${escapeHtml(e.to)}'); focusOnSelected()">${escapeHtml(toName)}</td><td style="padding: 10px; font-family: monospace; color: var(--accent); cursor: pointer;" onclick="document.getElementById('port-map-modal').classList.remove('active'); selectTheConnection('${escapeHtml(e.id)}'); focusOnSelected()">${escapeHtml(e.toPort) || "-"}</td><td style="padding: 10px; color: var(--text-soft); font-size: 12px;">${escapeHtml(notes) || "-"}</td></tr>`;
         });
         html += '</tbody></table>';
         container.innerHTML = html;

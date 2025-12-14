@@ -13,8 +13,9 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ![The One File](assets/corporate-preview.gif) ![The One File](assets/homelab-preview.gif) ![The One File](assets/mobilepreviews.jpg)
 
-### Version 3.9.9.2 : 12/11/25 Added Advanced Ports View [#25](https://github.com/gelatinescreams/The-One-File/issues/25)
+### Version 3.9.9.4 : 12/13/25 Further fixes towards 4.0 Stable [changelog.md](changelog.md)
 
+* **Very close to 4.0 Stable** Thank you to all the testers
 * **Added Dedicated Ports Tab** Easily view and navigate the canvas using the new ports tab. Also includes csv export option
 * **Added View Only Mode in Settings** Disables all editing while keeping pan and zoom
 * * Click or tap any canvas item five times to inspect its details while in View Only Mode
@@ -67,10 +68,10 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ### Download:
 
-* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24109596/the-one-file-corporate-demo.html)
-* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24109598/the-one-file-homelab-demo.html)
-* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24109600/theonefile-networkening-corporate-demo.html)
-* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24109601/theonefile-networkening-homelab-demo.html)
+* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24154646/the-one-file-corporate-demo.html)
+* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24154647/the-one-file-homelab-demo.html)
+* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24154648/theonefile-networkening-corporate-demo.html)
+* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24154649/theonefile-networkening-homelab-demo.html)
 
 ### Why It Exists
 
