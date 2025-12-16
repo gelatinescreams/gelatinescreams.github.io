@@ -7,7 +7,7 @@
   <meta name="keywords" content="single file network topology editor, offline network diagram tool, self contained network diagram, html network diagram editor, portable network topology tool, offline network documentation, air gapped network diagram, network topology single html file, editable network diagram offline, view and edit network diagrams in browser, offline first network topology, encrypted network documentation, aes 256 encrypted network diagrams, browser based network diagram editor, zero dependency network diagram tool, no server network documentation, homelab network diagram, enterprise network topology documentation, rack diagram offline, vlan network diagram, subnet planning diagram, break glass network documentation, disaster recovery network documentation, air gapped infrastructure documentation, offline encrypted documentation, browser native encryption tool, web crypto api aes gcm, secure network topology editor, no cloud network documentation, client side encrypted diagrams, editable html diagram, network diagram with custom icons, live network status monitoring diagram, ping monitoring network map, responsive network diagram editor, mobile network diagram tool">
   <meta name="author" content="GelatineScreams">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
   <style>
     @property --rotate {
       syntax: "<angle>";
@@ -49,6 +49,7 @@
       --glow-intensity: 0.6;
       --particle-opacity: 0.7;
       --flash-intensity: 0.3;
+	  --flash-color: rgba(93, 220, 255, var(--lightning-opacity));
     }
 
     :root[data-theme="light"] {
@@ -75,6 +76,7 @@
       --glow-intensity: 0.35;
       --particle-opacity: 0.4;
       --flash-intensity: 0.15;
+	  --flash-color: rgba(2, 100, 180, var(--lightning-opacity));
     }
 
     * {
@@ -92,6 +94,8 @@
       padding: 2.5rem 1.5rem;
       overflow-x: hidden;
       transition: background var(--transition), color var(--transition);
+	  font-family: 'MedievalSharp', cursive;
+      font-size: 0.8rem;
     }
 
     body::before {
@@ -107,17 +111,17 @@
       transition: background var(--transition);
     }
 
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(ellipse at var(--flash-x, 50%) var(--flash-y, 30%), 
-        rgba(93, 220, 255, var(--lightning-opacity)) 0%, 
-        transparent 50%);
-      pointer-events: none;
-      z-index: 1;
-      animation: ambientFlash 8s ease-in-out infinite;
-    }
+	body::after {
+	  content: "";
+	  position: fixed;
+	  inset: 0;
+	  background: radial-gradient(ellipse at var(--flash-x, 50%) var(--flash-y, 30%), 
+		var(--flash-color) 0%, 
+		transparent 50%);
+	  pointer-events: none;
+	  z-index: 1;
+	  animation: ambientFlash 8s ease-in-out infinite;
+	}
 
     @keyframes ambientFlash {
       0%, 100% { --lightning-opacity: 0; --flash-x: 30%; --flash-y: 20%; }
@@ -255,7 +259,7 @@
     }
 
     .title {
-      font-size: 0.8rem;
+      font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
@@ -268,7 +272,7 @@
     }
 
     .tagline {
-      font-size: 0.65rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       letter-spacing: 0.12em;
       margin-top: 0.15rem;
@@ -293,6 +297,7 @@
 
     .theme-toggle {
       font-size: 0.7rem;
+	  font-family: inherit;
       font-weight: 600;
       padding: 0.4rem 0.85rem;
       border-radius: 0.5rem;
@@ -605,7 +610,7 @@
           </div>
         </div>
         <div class="header-controls">
-          <button id="theme-toggle" class="theme-toggle">Light</button>
+          <button id="theme-toggle" class="theme-toggle">Light Mode</button>
           <div class="badge">
             <span class="badge-dot"></span>
             <span>GitHub status</span>
@@ -652,7 +657,7 @@
             return;
           }
 
-          setStatus("Loading README.md…", false);
+          setStatus("Loading README.md from github…", false);
 
           const response = await fetch("README.md", {
             method: "GET",
@@ -678,11 +683,11 @@
           const safeHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
 
           readmeEl.innerHTML = safeHtml;
-          setStatus("The Quickening is complete.", false);
+          setStatus("Readme.md loaded. Thank you GitHub", false);
         } catch (err) {
           console.error("Failed to load README:", err);
           readmeEl.textContent = "Could not load README.md.";
-          setStatus("Error loading README.md.", true);
+          setStatus("Error loading README.md, check github status", true);
         }
       }
 
@@ -711,7 +716,7 @@
       });
 
       function updateBtn(theme) {
-        toggleBtn.textContent = theme === "dark" ? "Light" : "Dark";
+        toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
       }
     })();
   </script>
