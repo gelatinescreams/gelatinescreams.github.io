@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <title>The One File</title>
@@ -21,6 +21,62 @@
       inherits: false;
     }
 
+    :root {
+      --transition: 0.4s ease;
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #08090c;
+      --bg-card: #0f1019;
+      --bg-card-end: #0a0b0f;
+      --bg-content: rgba(8, 9, 15, 0.8);
+      --text: #f0f1f3;
+      --text-secondary: #c8ccd4;
+      --text-muted: #6b7a8c;
+      --accent: #5ddcff;
+      --accent-secondary: #7dd3fc;
+      --accent-tertiary: #93c5fd;
+      --accent-glow: rgba(93, 220, 255, 0.5);
+      --accent-subtle: rgba(93, 220, 255, 0.1);
+      --border: rgba(93, 220, 255, 0.15);
+      --border-subtle: rgba(93, 220, 255, 0.1);
+      --code-bg: rgba(93, 220, 255, 0.1);
+      --table-header: rgba(93, 220, 255, 0.08);
+      --table-alt: rgba(93, 220, 255, 0.03);
+      --gradient-1: rgba(76, 0, 194, 0.15);
+      --gradient-2: rgba(56, 189, 248, 0.1);
+      --gradient-3: rgba(60, 103, 227, 0.05);
+      --glow-intensity: 0.6;
+      --particle-opacity: 0.7;
+      --flash-intensity: 0.3;
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f0f4f8;
+      --bg-card: #ffffff;
+      --bg-card-end: #f8fafc;
+      --bg-content: rgba(255, 255, 255, 0.9);
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --accent: #0284c7;
+      --accent-secondary: #0369a1;
+      --accent-tertiary: #075985;
+      --accent-glow: rgba(2, 132, 199, 0.4);
+      --accent-subtle: rgba(2, 132, 199, 0.08);
+      --border: rgba(2, 132, 199, 0.2);
+      --border-subtle: rgba(2, 132, 199, 0.1);
+      --code-bg: rgba(2, 132, 199, 0.08);
+      --table-header: rgba(2, 132, 199, 0.08);
+      --table-alt: rgba(2, 132, 199, 0.03);
+      --gradient-1: rgba(76, 0, 194, 0.08);
+      --gradient-2: rgba(56, 189, 248, 0.06);
+      --gradient-3: rgba(60, 103, 227, 0.04);
+      --glow-intensity: 0.35;
+      --particle-opacity: 0.4;
+      --flash-intensity: 0.15;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -29,12 +85,13 @@
       margin: 0;
       min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #08090c;
-      color: #f0f1f3;
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       justify-content: center;
       padding: 2.5rem 1.5rem;
       overflow-x: hidden;
+      transition: background var(--transition), color var(--transition);
     }
 
     body::before {
@@ -42,11 +99,12 @@
       position: fixed;
       inset: 0;
       background: 
-        radial-gradient(ellipse at 20% 20%, rgba(76, 0, 194, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(60, 103, 227, 0.05) 0%, transparent 70%);
+        radial-gradient(ellipse at 20% 20%, var(--gradient-1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, var(--gradient-2) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, var(--gradient-3) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
+      transition: background var(--transition);
     }
 
     body::after {
@@ -63,13 +121,13 @@
 
     @keyframes ambientFlash {
       0%, 100% { --lightning-opacity: 0; --flash-x: 30%; --flash-y: 20%; }
-      4% { --lightning-opacity: 0.3; }
+      4% { --lightning-opacity: var(--flash-intensity); }
       5% { --lightning-opacity: 0; }
-      6% { --lightning-opacity: 0.15; }
+      6% { --lightning-opacity: calc(var(--flash-intensity) * 0.5); }
       7%, 50% { --lightning-opacity: 0; --flash-x: 70%; --flash-y: 60%; }
-      54% { --lightning-opacity: 0.25; }
+      54% { --lightning-opacity: calc(var(--flash-intensity) * 0.83); }
       55% { --lightning-opacity: 0; }
-      56% { --lightning-opacity: 0.1; }
+      56% { --lightning-opacity: calc(var(--flash-intensity) * 0.33); }
       57% { --lightning-opacity: 0; }
     }
 
@@ -102,7 +160,6 @@
     .shell::after {
       content: "";
       position: absolute;
-      top: 15%;
       left: 5%;
       right: 5%;
       bottom: -10%;
@@ -117,8 +174,9 @@
       );
       z-index: -3;
       filter: blur(40px);
-      opacity: 0.6;
+      opacity: var(--glow-intensity);
       animation: spin 4s linear infinite, pulse 3s ease-in-out infinite;
+      transition: opacity var(--transition);
     }
 
     @keyframes spin {
@@ -126,16 +184,17 @@
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 0.5; filter: blur(40px); }
-      50% { opacity: 0.8; filter: blur(50px); }
+      0%, 100% { opacity: calc(var(--glow-intensity) - 0.1); filter: blur(40px); }
+      50% { opacity: calc(var(--glow-intensity) + 0.2); filter: blur(50px); }
     }
 
     .inner {
-      background: linear-gradient(145deg, #0f1019 0%, #0a0b0f 100%);
+      background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-card-end) 100%);
       border-radius: calc(1rem - 3px);
       padding: 2rem 2.25rem 2.25rem;
       position: relative;
       overflow: hidden;
+      transition: background var(--transition);
     }
 
     .inner::before {
@@ -154,7 +213,8 @@
         radial-gradient(2px 2px at 90% 90%, rgba(93, 220, 255, 0.4), transparent);
       animation: drift 20s linear infinite;
       pointer-events: none;
-      opacity: 0.7;
+      opacity: var(--particle-opacity);
+      transition: opacity var(--transition);
     }
 
     @keyframes drift {
@@ -168,21 +228,52 @@
       gap: 1rem;
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(93, 220, 255, 0.15);
+      border-bottom: 1px solid var(--border-subtle);
       position: relative;
+      transition: border-color var(--transition);
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .sword-icon {
+      width: 32px;
+      height: 20px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 4px var(--accent-glow));
+      transition: filter var(--transition);
+    }
+
+    .sword-icon polygon,
+    .sword-icon rect,
+    .sword-icon ellipse {
+      fill: var(--accent);
+      transition: fill var(--transition);
     }
 
     .title {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #5ddcff;
+      color: var(--accent);
       text-shadow: 
-        0 0 10px rgba(93, 220, 255, 0.5),
-        0 0 20px rgba(93, 220, 255, 0.3),
-        0 0 40px rgba(93, 220, 255, 0.2);
+        0 0 10px var(--accent-glow),
+        0 0 20px rgba(93, 220, 255, 0.3);
       animation: electricFlicker 4s ease-in-out infinite;
+      transition: color var(--transition), text-shadow var(--transition);
+    }
+
+    .tagline {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      margin-top: 0.15rem;
+      text-transform: uppercase;
+      transition: color var(--transition);
     }
 
     @keyframes electricFlicker {
@@ -194,17 +285,30 @@
       96% { opacity: 1; }
     }
 
-    .tagline {
-      font-size: 0.65rem;
-      color: rgba(93, 220, 255, 0.5);
-      letter-spacing: 0.15em;
-      margin-top: 0.25rem;
-    }
-
     .header-controls {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+    }
+
+    .theme-toggle {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      background: var(--accent-subtle);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .theme-toggle:hover {
+      background: var(--accent);
+      color: var(--bg-card);
+      box-shadow: 0 0 20px var(--accent-glow);
     }
 
     .badge {
@@ -212,46 +316,49 @@
       font-weight: 500;
       padding: 0.4rem 0.85rem;
       border-radius: 2rem;
-      border: 1px solid rgba(93, 220, 255, 0.3);
-      color: #5ddcff;
-      background: rgba(93, 220, 255, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      background: var(--accent-subtle);
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      transition: all var(--transition);
     }
 
     .badge-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #5ddcff;
-      box-shadow: 0 0 10px #5ddcff, 0 0 20px rgba(93, 220, 255, 0.5);
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-glow);
       animation: pulseDot 2s ease-in-out infinite;
     }
 
     @keyframes pulseDot {
-      0%, 100% { box-shadow: 0 0 10px #5ddcff, 0 0 20px rgba(93, 220, 255, 0.5); }
-      50% { box-shadow: 0 0 15px #5ddcff, 0 0 30px rgba(93, 220, 255, 0.8); }
+      0%, 100% { box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-glow); }
+      50% { box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent-glow); }
     }
 
     .markdown-body {
       border-radius: 0.75rem;
-      border: 1px solid rgba(93, 220, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       padding: 1.5rem 1.75rem;
-      background: rgba(8, 9, 15, 0.8);
+      background: var(--bg-content);
       overflow-x: auto;
       line-height: 1.7;
       font-size: 0.925rem;
-      color: #c8ccd4;
+      color: var(--text-secondary);
       position: relative;
+      transition: all var(--transition);
     }
 
     .markdown-body img {
       max-width: 100%;
       height: auto;
       border-radius: 0.5rem;
-      border: 1px solid rgba(93, 220, 255, 0.2);
+      border: 1px solid var(--border);
       margin: 0.5rem 0;
+      transition: border-color var(--transition);
     }
 
     .markdown-body h1,
@@ -264,7 +371,8 @@
       line-height: 1.4;
       margin-top: 2rem;
       margin-bottom: 0.75rem;
-      color: #f0f1f3;
+      color: var(--text);
+      transition: color var(--transition);
     }
 
     .markdown-body h1:first-child,
@@ -275,22 +383,22 @@
 
     .markdown-body h1 {
       font-size: 1.6rem;
-      color: #5ddcff;
-      text-shadow: 0 0 20px rgba(93, 220, 255, 0.3);
-      border-bottom: 1px solid rgba(93, 220, 255, 0.2);
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-glow);
+      border-bottom: 1px solid var(--border);
       padding-bottom: 0.5rem;
     }
 
     .markdown-body h2 {
       font-size: 1.35rem;
-      color: #7dd3fc;
-      border-bottom: 1px solid rgba(93, 220, 255, 0.1);
+      color: var(--accent-secondary);
+      border-bottom: 1px solid var(--border-subtle);
       padding-bottom: 0.35rem;
     }
 
     .markdown-body h3 { 
       font-size: 1.1rem; 
-      color: #93c5fd;
+      color: var(--accent-tertiary);
     }
 
     .markdown-body p {
@@ -298,44 +406,46 @@
     }
 
     .markdown-body a {
-      color: #5ddcff;
+      color: var(--accent);
       text-decoration: none;
       border-bottom: 1px solid transparent;
       transition: all 0.2s ease;
     }
 
     .markdown-body a:hover {
-      text-shadow: 0 0 10px rgba(93, 220, 255, 0.5);
-      border-bottom-color: #5ddcff;
+      text-shadow: 0 0 10px var(--accent-glow);
+      border-bottom-color: var(--accent);
     }
 
     .markdown-body strong {
-      color: #f0f1f3;
+      color: var(--text);
     }
 
     .markdown-body code {
       font-family: "SF Mono", Monaco, Consolas, monospace;
       font-size: 0.85em;
-      background: rgba(93, 220, 255, 0.1);
+      background: var(--code-bg);
       padding: 0.2rem 0.45rem;
       border-radius: 0.35rem;
-      border: 1px solid rgba(93, 220, 255, 0.15);
-      color: #5ddcff;
+      border: 1px solid var(--border-subtle);
+      color: var(--accent);
+      transition: all var(--transition);
     }
 
     .markdown-body pre {
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--code-bg);
       border-radius: 0.5rem;
       padding: 1rem 1.25rem;
       overflow-x: auto;
-      border: 1px solid rgba(93, 220, 255, 0.1);
+      border: 1px solid var(--border-subtle);
+      transition: all var(--transition);
     }
 
     .markdown-body pre code {
       padding: 0;
       border: 0;
       background: transparent;
-      color: #a5b4c8;
+      color: var(--text-secondary);
     }
 
     .markdown-body ul,
@@ -345,7 +455,7 @@
     }
 
     .markdown-body li::marker {
-      color: #5ddcff;
+      color: var(--accent);
     }
 
     .markdown-body table {
@@ -353,35 +463,38 @@
       width: 100%;
       margin: 1rem 0;
       font-size: 0.875rem;
-      border: 1px solid rgba(93, 220, 255, 0.15);
+      border: 1px solid var(--border);
+      transition: border-color var(--transition);
     }
 
     .markdown-body th,
     .markdown-body td {
-      border: 1px solid rgba(93, 220, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       padding: 0.6rem 0.85rem;
       text-align: left;
+      transition: all var(--transition);
     }
 
     .markdown-body th {
-      background: rgba(93, 220, 255, 0.08);
+      background: var(--table-header);
       font-weight: 600;
-      color: #7dd3fc;
+      color: var(--accent-secondary);
     }
 
     .markdown-body tr:nth-child(even) td {
-      background: rgba(93, 220, 255, 0.03);
+      background: var(--table-alt);
     }
 
     .status {
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid rgba(93, 220, 255, 0.1);
+      border-top: 1px solid var(--border-subtle);
       font-size: 0.8rem;
-      color: #6b7a8c;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      transition: all var(--transition);
     }
 
     .status-dot {
@@ -402,6 +515,10 @@
       pointer-events: none;
       opacity: 0;
       filter: drop-shadow(0 0 3px #5ddcff) drop-shadow(0 0 10px rgba(93, 220, 255, 0.8));
+    }
+
+    .lightning path {
+      fill: var(--accent);
     }
 
     .lightning-left {
@@ -445,6 +562,11 @@
         gap: 0.75rem;
       }
 
+      .header-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+
       .lightning {
         display: none;
       }
@@ -457,24 +579,36 @@
 <body>
   <div class="shell">
     <svg class="lightning lightning-left" width="40" height="80" viewBox="0 0 40 80">
-      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" 
-            fill="#5ddcff" />
+      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" />
     </svg>
     <svg class="lightning lightning-right" width="40" height="80" viewBox="0 0 40 80">
-      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" 
-            fill="#5ddcff" />
+      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" />
     </svg>
 
     <div class="inner">
       <header>
         <div>
-          <div class="title">⚔ The One File</div>
-          <div class="tagline">"In the End, there can be only one"</div>
+          <div class="title-group">
+					  
+<svg class="sword-icon" width="44" height="24" viewBox="0 0 110 60">
+  <polygon points="40,30 105,26 110,30 105,34 40,30"/>
+  <rect x="45" y="28" width="50" height="4" opacity="0.25"/>
+  <rect x="34" y="14" width="8" height="32" rx="2"/>
+  <rect x="14" y="25" width="22" height="10" rx="3"/>
+  <ellipse cx="8" cy="30" rx="7" ry="8"/>
+</svg>
+			
+            <div>
+              <div class="title">The One File</div>
+             <div class="tagline">"In the End, there can be only one"</div>
+            </div>
+          </div>
         </div>
         <div class="header-controls">
+          <button id="theme-toggle" class="theme-toggle">Light</button>
           <div class="badge">
             <span class="badge-dot"></span>
-            <span>README.md</span>
+            <span>GitHub status</span>
           </div>
         </div>
       </header>
@@ -553,6 +687,32 @@
       }
 
       window.addEventListener("load", loadReadme);
+    })();
+  </script>
+  <script>
+    (() => {
+      "use strict";
+
+      const root = document.documentElement;
+      const toggleBtn = document.getElementById("theme-toggle");
+
+      const saved = localStorage.getItem("theme");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const current = saved || (systemDark ? "dark" : "light");
+
+      root.setAttribute("data-theme", current);
+      updateBtn(current);
+
+      toggleBtn.addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        updateBtn(next);
+      });
+
+      function updateBtn(theme) {
+        toggleBtn.textContent = theme === "dark" ? "Light" : "Dark";
+      }
     })();
   </script>
 </body>
