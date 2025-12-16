@@ -1,42 +1,62 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- 
-GELATINE SCREAMS 
-doyouknowtheprotonman@proton.me
--->
   <meta charset="utf-8" />
-  <title>The One File – README</title>
+  <title>The One File</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
   <style>
-	:root {
-	  color-scheme: light dark;
-	  --transition: 0.25s ease;
-	}
+    :root {
+      color-scheme: light dark;
+      --transition: 0.3s ease;
+    }
 
-	/* Default: Dark */
-	:root[data-theme="dark"] {
-	  --bg: #0b0b0c;
-	  --bg-elevated: #111218;
-	  --border-subtle: rgba(255, 255, 255, 0.08);
-	  --text: #f3f4f6;
-	  --muted: #9ca3af;
-	  --accent: #38bdf8;
-	  --code-bg: #020617;
-	}
+    :root[data-theme="dark"] {
+      --bg: #0a0a0b;
+      --bg-elevated: #121318;
+      --bg-card: #16171c;
+      --bg-card-inner: #1a1b22;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-medium: rgba(255, 255, 255, 0.1);
+      --text: #f0f1f3;
+      --text-secondary: #b8bcc4;
+      --muted: #7a8290;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --code-bg: #0d0e12;
+      --code-border: rgba(255, 255, 255, 0.08);
+      --table-header: #1e1f26;
+      --table-row-alt: rgba(255, 255, 255, 0.02);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+      --gradient-start: rgba(56, 189, 248, 0.08);
+      --gradient-end: transparent;
+      --success: #22c55e;
+      --error: #f87171;
+    }
 
-	/* Light Mode */
-	:root[data-theme="light"] {
-	  --bg: #ffffff;
-	  --bg-elevated: #f7f7f8;
-	  --border-subtle: rgba(0, 0, 0, 0.12);
-	  --text: #111111;
-	  --muted: #4b5563;
-	  --accent: #0ea5e9;
-	  --code-bg: #eef2f7;
-	}
+    :root[data-theme="light"] {
+      --bg: #f5f6f8;
+      --bg-elevated: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-inner: #fafbfc;
+      --border-subtle: rgba(0, 0, 0, 0.06);
+      --border-medium: rgba(0, 0, 0, 0.1);
+      --text: #1a1a1a;
+      --text-secondary: #4a4a4a;
+      --muted: #6b7280;
+      --accent: #0284c7;
+      --accent-glow: rgba(2, 132, 199, 0.1);
+      --code-bg: #f1f5f9;
+      --code-border: rgba(0, 0, 0, 0.08);
+      --table-header: #f1f5f9;
+      --table-row-alt: rgba(0, 0, 0, 0.02);
+      --shadow-color: rgba(0, 0, 0, 0.08);
+      --gradient-start: rgba(2, 132, 199, 0.06);
+      --gradient-end: transparent;
+      --success: #16a34a;
+      --error: #dc2626;
+    }
 
     * {
       box-sizing: border-box;
@@ -45,30 +65,29 @@ doyouknowtheprotonman@proton.me
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
-      transition: background var(--transition), color var(--transition);
       color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 2rem;
+      transition: background var(--transition), color var(--transition);
     }
 
     .shell {
       width: 100%;
-      max-width: 960px;
+      max-width: 900px;
       border-radius: 1.25rem;
-      background: linear-gradient(145deg, rgba(148, 163, 184, 0.15), transparent);
-      padding: 1px;
-      box-shadow:
-        0 18px 60px rgba(0, 0, 0, 0.65),
-        0 0 0 1px rgba(15, 23, 42, 0.9);
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      box-shadow: 
+        0 4px 6px -1px var(--shadow-color),
+        0 20px 40px -10px var(--shadow-color);
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
     }
 
     .inner {
-      border-radius: 1.2rem;
-      background: radial-gradient(circle at top left, #020617, #020617 38%, #020617 70%, #020617 100%);
-      padding: 1.5rem 1.75rem 2.25rem;
+      padding: 1.75rem 2rem 2rem;
     }
 
     header {
@@ -77,53 +96,82 @@ doyouknowtheprotonman@proton.me
       justify-content: space-between;
       gap: 1rem;
       margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .title {
-      font-size: 1rem;
+      font-size: 0.875rem;
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
       color: var(--muted);
+      transition: color var(--transition);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .theme-toggle {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+      background: var(--bg-card-inner);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .badge {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.65rem;
-      border-radius: 999px;
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: 2rem;
+      border: 1px solid var(--accent-glow);
       color: var(--accent);
+      background: var(--accent-glow);
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent);
-      backdrop-filter: blur(20px);
+      gap: 0.4rem;
+      transition: all var(--transition);
     }
 
     .badge-dot {
       width: 6px;
       height: 6px;
-      border-radius: 999px;
+      border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+      box-shadow: 0 0 8px var(--accent);
     }
 
     .markdown-body {
-      border-radius: 1rem;
+      border-radius: 0.875rem;
       border: 1px solid var(--border-subtle);
-      padding: 1.25rem 1.5rem;
-      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.98));
+      padding: 1.5rem 1.75rem;
+      background: var(--bg-card-inner);
       overflow-x: auto;
-      line-height: 1.6;
-      font-size: 0.95rem;
+      line-height: 1.7;
+      font-size: 0.925rem;
+      color: var(--text);
+      transition: all var(--transition);
     }
 
     .markdown-body img {
       max-width: 100%;
       height: auto;
       border-radius: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: #020617;
+      border: 1px solid var(--border-medium);
+      margin: 0.5rem 0;
     }
 
     .markdown-body h1,
@@ -132,57 +180,82 @@ doyouknowtheprotonman@proton.me
     .markdown-body h4,
     .markdown-body h5,
     .markdown-body h6 {
-      font-weight: 650;
-      line-height: 1.3;
-      margin-top: 1.5rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-top: 2rem;
       margin-bottom: 0.75rem;
+      color: var(--text);
       scroll-margin-top: 5rem;
     }
 
+    .markdown-body h1:first-child,
+    .markdown-body h2:first-child,
+    .markdown-body h3:first-child,
+    .markdown-body h4:first-child,
+    .markdown-body h5:first-child,
+    .markdown-body h6:first-child {
+      margin-top: 0;
+    }
+
     .markdown-body h1 {
-      font-size: 1.6rem;
-      border-bottom: 1px solid var(--border-subtle);
+      font-size: 1.75rem;
+      border-bottom: 2px solid var(--border-subtle);
       padding-bottom: 0.5rem;
     }
 
     .markdown-body h2 {
-      font-size: 1.35rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-      padding-bottom: 0.4rem;
+      font-size: 1.4rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 0.35rem;
     }
 
-    .markdown-body h3 { font-size: 1.1rem; }
+    .markdown-body h3 { font-size: 1.15rem; }
     .markdown-body h4 { font-size: 1rem; }
+    .markdown-body h5 { font-size: 0.925rem; color: var(--text-secondary); }
 
     .markdown-body p {
-      margin: 0.4rem 0 0.6rem;
+      margin: 0.75rem 0;
+      color: var(--text-secondary);
     }
 
     .markdown-body a {
       color: var(--accent);
       text-decoration: none;
-      border-bottom: 1px dashed rgba(56, 189, 248, 0.5);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
     }
 
     .markdown-body a:hover {
-      border-bottom-style: solid;
+      border-bottom-color: var(--accent);
+    }
+
+    .markdown-body strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .markdown-body em {
+      color: var(--text-secondary);
     }
 
     .markdown-body code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
       font-size: 0.85em;
       background: var(--code-bg);
-      padding: 0.15rem 0.35rem;
+      padding: 0.2rem 0.45rem;
       border-radius: 0.35rem;
-      border: 1px solid rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--code-border);
+      color: var(--accent);
+      transition: all var(--transition);
     }
 
     .markdown-body pre {
       background: var(--code-bg);
       border-radius: 0.75rem;
-      padding: 0.9rem 1rem;
+      padding: 1rem 1.25rem;
       overflow-x: auto;
-      border: 1px solid rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--code-border);
+      transition: all var(--transition);
     }
 
     .markdown-body pre code {
@@ -190,77 +263,121 @@ doyouknowtheprotonman@proton.me
       border: 0;
       background: transparent;
       font-size: 0.85rem;
+      color: var(--text-secondary);
     }
 
     .markdown-body ul,
     .markdown-body ol {
       padding-left: 1.5rem;
-      margin: 0.4rem 0 0.7rem;
+      margin: 0.75rem 0;
+      color: var(--text-secondary);
+    }
+
+    .markdown-body li {
+      margin: 0.35rem 0;
+    }
+
+    .markdown-body li::marker {
+      color: var(--muted);
+    }
+
+    .markdown-body hr {
+      border: none;
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 2rem 0;
+    }
+
+    .markdown-body blockquote {
+      margin: 1rem 0;
+      padding: 0.75rem 1.25rem;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-glow);
+      border-radius: 0 0.5rem 0.5rem 0;
+      color: var(--text-secondary);
     }
 
     .markdown-body table {
       border-collapse: collapse;
       width: 100%;
-      margin: 0.8rem 0 1rem;
-      font-size: 0.9rem;
-      background: rgba(15, 23, 42, 0.85);
+      margin: 1rem 0;
+      font-size: 0.875rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
     }
 
     .markdown-body th,
     .markdown-body td {
-      border: 1px solid rgba(75, 85, 99, 0.6);
-      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border-subtle);
+      padding: 0.6rem 0.85rem;
       text-align: left;
+      transition: all var(--transition);
     }
 
     .markdown-body th {
-      background: rgba(15, 23, 42, 0.95);
+      background: var(--table-header);
       font-weight: 600;
+      color: var(--text);
+    }
+
+    .markdown-body td {
+      color: var(--text-secondary);
     }
 
     .markdown-body tr:nth-child(even) td {
-      background: rgba(15, 23, 42, 0.9);
+      background: var(--table-row-alt);
     }
 
     .status {
-      margin-top: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
       font-size: 0.8rem;
       color: var(--muted);
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
+      transition: all var(--transition);
     }
 
     .status-dot {
       width: 7px;
       height: 7px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      flex-shrink: 0;
     }
 
     .status.error .status-dot {
-      background: #f97373;
-      box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+      background: var(--error);
+      box-shadow: 0 0 8px var(--error);
     }
 
     @media (max-width: 640px) {
       body {
-        padding: 0.75rem;
+        padding: 1rem;
       }
 
       .inner {
-        padding: 1.1rem 1.1rem 1.75rem;
+        padding: 1.25rem 1.25rem 1.5rem;
       }
 
       .markdown-body {
-        padding: 1rem 1.05rem;
-        border-radius: 0.9rem;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
       }
 
       header {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .header-controls {
+        width: 100%;
+        justify-content: space-between;
       }
     }
   </style>
@@ -273,20 +390,11 @@ doyouknowtheprotonman@proton.me
     <div class="inner">
       <header>
         <div class="title">The One File · README</div>
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <button id="theme-toggle" style="
-            font-size: 0.75rem;
-            padding: 0.25rem 0.65rem;
-            border-radius: 999px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            color: var(--accent);
-            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent);
-            backdrop-filter: blur(20px);
-            cursor: pointer;
-          ">Dark Mode</button>
+        <div class="header-controls">
+          <button id="theme-toggle" class="theme-toggle">Light Mode</button>
           <div class="badge">
             <span class="badge-dot"></span>
-            <span>Rendered from README.md</span>
+            <span>README.md</span>
           </div>
         </div>
       </header>
@@ -297,7 +405,7 @@ doyouknowtheprotonman@proton.me
 
       <div id="status" class="status">
         <span class="status-dot"></span>
-        <span>Fetching README from this repository root.</span>
+        <span>Fetching README from repository root.</span>
       </div>
     </div>
   </div>
@@ -365,7 +473,7 @@ doyouknowtheprotonman@proton.me
           });
 
           readmeEl.innerHTML = safeHtml;
-          setStatus("README.md loaded and rendered.", false);
+          setStatus("README.md loaded successfully.", false);
         } catch (err) {
           console.error("Failed to load README:", err);
           readmeEl.textContent = "Could not load README.md.";
@@ -377,32 +485,30 @@ doyouknowtheprotonman@proton.me
     })();
   </script>
   <script>
-(() => {
-  "use strict";
+    (() => {
+      "use strict";
 
-  const root = document.documentElement;
-  const toggleBtn = document.getElementById("theme-toggle");
+      const root = document.documentElement;
+      const toggleBtn = document.getElementById("theme-toggle");
 
-  const saved = localStorage.getItem("theme");
-  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const saved = localStorage.getItem("theme");
+      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const current = saved || (systemDark ? "dark" : "light");
 
-  const current = saved || (systemDark ? "dark" : "dark");
+      root.setAttribute("data-theme", current);
+      updateBtn(current);
 
-  root.setAttribute("data-theme", current);
-  updateBtn(current);
+      toggleBtn.addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        updateBtn(next);
+      });
 
-  toggleBtn.addEventListener("click", () => {
-    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    updateBtn(next);
-  });
-
-  function updateBtn(theme) {
-    toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
-  }
-})();
-</script>
-
+      function updateBtn(theme) {
+        toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
+      }
+    })();
+  </script>
 </body>
 </html>
