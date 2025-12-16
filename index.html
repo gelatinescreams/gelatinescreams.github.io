@@ -3,59 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <title>The One File</title>
+  <meta name="description" content="One HTML file that you can open anywhere to view and edit your network diagrams, from air gapped documentation to live status monitoring and custom icons for both corporate and home lab topologies, working offline by default and online when it helps.">
+  <meta name="keywords" content="single file network topology editor, offline network diagram tool, self contained network diagram, html network diagram editor, portable network topology tool, offline network documentation, air gapped network diagram, network topology single html file, editable network diagram offline, view and edit network diagrams in browser, offline first network topology, encrypted network documentation, aes 256 encrypted network diagrams, browser based network diagram editor, zero dependency network diagram tool, no server network documentation, homelab network diagram, enterprise network topology documentation, rack diagram offline, vlan network diagram, subnet planning diagram, break glass network documentation, disaster recovery network documentation, air gapped infrastructure documentation, offline encrypted documentation, browser native encryption tool, web crypto api aes gcm, secure network topology editor, no cloud network documentation, client side encrypted diagrams, editable html diagram, network diagram with custom icons, live network status monitoring diagram, ping monitoring network map, responsive network diagram editor, mobile network diagram tool">
+  <meta name="author" content="GelatineScreams">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
   <style>
-    :root {
-      color-scheme: light dark;
-      --transition: 0.3s ease;
+    @property --rotate {
+      syntax: "<angle>";
+      initial-value: 0deg;
+      inherits: false;
     }
 
-    :root[data-theme="dark"] {
-      --bg: #0a0a0b;
-      --bg-elevated: #121318;
-      --bg-card: #16171c;
-      --bg-card-inner: #1a1b22;
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-medium: rgba(255, 255, 255, 0.1);
-      --text: #f0f1f3;
-      --text-secondary: #b8bcc4;
-      --muted: #7a8290;
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.15);
-      --code-bg: #0d0e12;
-      --code-border: rgba(255, 255, 255, 0.08);
-      --table-header: #1e1f26;
-      --table-row-alt: rgba(255, 255, 255, 0.02);
-      --shadow-color: rgba(0, 0, 0, 0.5);
-      --gradient-start: rgba(56, 189, 248, 0.08);
-      --gradient-end: transparent;
-      --success: #22c55e;
-      --error: #f87171;
-    }
-
-    :root[data-theme="light"] {
-      --bg: #f5f6f8;
-      --bg-elevated: #ffffff;
-      --bg-card: #ffffff;
-      --bg-card-inner: #fafbfc;
-      --border-subtle: rgba(0, 0, 0, 0.06);
-      --border-medium: rgba(0, 0, 0, 0.1);
-      --text: #1a1a1a;
-      --text-secondary: #4a4a4a;
-      --muted: #6b7280;
-      --accent: #0284c7;
-      --accent-glow: rgba(2, 132, 199, 0.1);
-      --code-bg: #f1f5f9;
-      --code-border: rgba(0, 0, 0, 0.08);
-      --table-header: #f1f5f9;
-      --table-row-alt: rgba(0, 0, 0, 0.02);
-      --shadow-color: rgba(0, 0, 0, 0.08);
-      --gradient-start: rgba(2, 132, 199, 0.06);
-      --gradient-end: transparent;
-      --success: #16a34a;
-      --error: #dc2626;
+    @property --lightning-opacity {
+      syntax: "<number>";
+      initial-value: 0;
+      inherits: false;
     }
 
     * {
@@ -65,29 +28,137 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #08090c;
+      color: #f0f1f3;
       display: flex;
       justify-content: center;
-      padding: 2rem;
-      transition: background var(--transition), color var(--transition);
+      padding: 2.5rem 1.5rem;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(76, 0, 194, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(60, 103, 227, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at var(--flash-x, 50%) var(--flash-y, 30%), 
+        rgba(93, 220, 255, var(--lightning-opacity)) 0%, 
+        transparent 50%);
+      pointer-events: none;
+      z-index: 1;
+      animation: ambientFlash 8s ease-in-out infinite;
+    }
+
+    @keyframes ambientFlash {
+      0%, 100% { --lightning-opacity: 0; --flash-x: 30%; --flash-y: 20%; }
+      4% { --lightning-opacity: 0.3; }
+      5% { --lightning-opacity: 0; }
+      6% { --lightning-opacity: 0.15; }
+      7%, 50% { --lightning-opacity: 0; --flash-x: 70%; --flash-y: 60%; }
+      54% { --lightning-opacity: 0.25; }
+      55% { --lightning-opacity: 0; }
+      56% { --lightning-opacity: 0.1; }
+      57% { --lightning-opacity: 0; }
     }
 
     .shell {
+      position: relative;
       width: 100%;
       max-width: 900px;
-      border-radius: 1.25rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-medium);
-      box-shadow: 
-        0 4px 6px -1px var(--shadow-color),
-        0 20px 40px -10px var(--shadow-color);
-      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+      padding: 3px;
+      border-radius: 1rem;
+      z-index: 10;
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: 1rem;
+      background: linear-gradient(
+        var(--rotate),
+        #5ddcff,
+        #3c67e3 25%,
+        #4e00c2 50%,
+        #3c67e3 75%,
+        #5ddcff
+      );
+      z-index: -2;
+      animation: spin 4s linear infinite;
+    }
+
+    .shell::after {
+      content: "";
+      position: absolute;
+      top: 15%;
+      left: 5%;
+      right: 5%;
+      bottom: -10%;
+      border-radius: 1rem;
+      background: linear-gradient(
+        var(--rotate),
+        #5ddcff,
+        #3c67e3 25%,
+        #4e00c2 50%,
+        #3c67e3 75%,
+        #5ddcff
+      );
+      z-index: -3;
+      filter: blur(40px);
+      opacity: 0.6;
+      animation: spin 4s linear infinite, pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { --rotate: 360deg; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; filter: blur(40px); }
+      50% { opacity: 0.8; filter: blur(50px); }
     }
 
     .inner {
-      padding: 1.75rem 2rem 2rem;
+      background: linear-gradient(145deg, #0f1019 0%, #0a0b0f 100%);
+      border-radius: calc(1rem - 3px);
+      padding: 2rem 2.25rem 2.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .inner::before {
+      content: "";
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background-image: 
+        radial-gradient(2px 2px at 20% 30%, rgba(93, 220, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 40% 70%, rgba(60, 103, 227, 0.6), transparent),
+        radial-gradient(1px 1px at 60% 20%, rgba(78, 0, 194, 0.7), transparent),
+        radial-gradient(2px 2px at 80% 50%, rgba(93, 220, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 10% 80%, rgba(60, 103, 227, 0.6), transparent),
+        radial-gradient(2px 2px at 90% 90%, rgba(93, 220, 255, 0.4), transparent);
+      animation: drift 20s linear infinite;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    @keyframes drift {
+      to { transform: translate(10%, 10%); }
     }
 
     header {
@@ -97,16 +168,37 @@
       gap: 1rem;
       margin-bottom: 1.5rem;
       padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid rgba(93, 220, 255, 0.15);
+      position: relative;
     }
 
     .title {
-      font-size: 0.875rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--muted);
-      transition: color var(--transition);
+      color: #5ddcff;
+      text-shadow: 
+        0 0 10px rgba(93, 220, 255, 0.5),
+        0 0 20px rgba(93, 220, 255, 0.3),
+        0 0 40px rgba(93, 220, 255, 0.2);
+      animation: electricFlicker 4s ease-in-out infinite;
+    }
+
+    @keyframes electricFlicker {
+      0%, 100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.7; }
+      94% { opacity: 1; }
+      95% { opacity: 0.8; }
+      96% { opacity: 1; }
+    }
+
+    .tagline {
+      font-size: 0.65rem;
+      color: rgba(93, 220, 255, 0.5);
+      letter-spacing: 0.15em;
+      margin-top: 0.25rem;
     }
 
     .header-controls {
@@ -115,62 +207,50 @@
       gap: 0.75rem;
     }
 
-    .theme-toggle {
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.4rem 0.85rem;
-      border-radius: 0.5rem;
-      border: 1px solid var(--border-medium);
-      color: var(--text-secondary);
-      background: var(--bg-card-inner);
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-
-    .theme-toggle:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
     .badge {
       font-size: 0.7rem;
       font-weight: 500;
-      padding: 0.35rem 0.75rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 2rem;
-      border: 1px solid var(--accent-glow);
-      color: var(--accent);
-      background: var(--accent-glow);
+      border: 1px solid rgba(93, 220, 255, 0.3);
+      color: #5ddcff;
+      background: rgba(93, 220, 255, 0.1);
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      transition: all var(--transition);
     }
 
     .badge-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
+      background: #5ddcff;
+      box-shadow: 0 0 10px #5ddcff, 0 0 20px rgba(93, 220, 255, 0.5);
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { box-shadow: 0 0 10px #5ddcff, 0 0 20px rgba(93, 220, 255, 0.5); }
+      50% { box-shadow: 0 0 15px #5ddcff, 0 0 30px rgba(93, 220, 255, 0.8); }
     }
 
     .markdown-body {
-      border-radius: 0.875rem;
-      border: 1px solid var(--border-subtle);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(93, 220, 255, 0.1);
       padding: 1.5rem 1.75rem;
-      background: var(--bg-card-inner);
+      background: rgba(8, 9, 15, 0.8);
       overflow-x: auto;
       line-height: 1.7;
       font-size: 0.925rem;
-      color: var(--text);
-      transition: all var(--transition);
+      color: #c8ccd4;
+      position: relative;
     }
 
     .markdown-body img {
       max-width: 100%;
       height: auto;
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      border: 1px solid rgba(93, 220, 255, 0.2);
       margin: 0.5rem 0;
     }
 
@@ -184,117 +264,88 @@
       line-height: 1.4;
       margin-top: 2rem;
       margin-bottom: 0.75rem;
-      color: var(--text);
-      scroll-margin-top: 5rem;
+      color: #f0f1f3;
     }
 
     .markdown-body h1:first-child,
     .markdown-body h2:first-child,
-    .markdown-body h3:first-child,
-    .markdown-body h4:first-child,
-    .markdown-body h5:first-child,
-    .markdown-body h6:first-child {
+    .markdown-body h3:first-child {
       margin-top: 0;
     }
 
     .markdown-body h1 {
-      font-size: 1.75rem;
-      border-bottom: 2px solid var(--border-subtle);
+      font-size: 1.6rem;
+      color: #5ddcff;
+      text-shadow: 0 0 20px rgba(93, 220, 255, 0.3);
+      border-bottom: 1px solid rgba(93, 220, 255, 0.2);
       padding-bottom: 0.5rem;
     }
 
     .markdown-body h2 {
-      font-size: 1.4rem;
-      border-bottom: 1px solid var(--border-subtle);
+      font-size: 1.35rem;
+      color: #7dd3fc;
+      border-bottom: 1px solid rgba(93, 220, 255, 0.1);
       padding-bottom: 0.35rem;
     }
 
-    .markdown-body h3 { font-size: 1.15rem; }
-    .markdown-body h4 { font-size: 1rem; }
-    .markdown-body h5 { font-size: 0.925rem; color: var(--text-secondary); }
+    .markdown-body h3 { 
+      font-size: 1.1rem; 
+      color: #93c5fd;
+    }
 
     .markdown-body p {
       margin: 0.75rem 0;
-      color: var(--text-secondary);
     }
 
     .markdown-body a {
-      color: var(--accent);
+      color: #5ddcff;
       text-decoration: none;
       border-bottom: 1px solid transparent;
-      transition: border-color 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .markdown-body a:hover {
-      border-bottom-color: var(--accent);
+      text-shadow: 0 0 10px rgba(93, 220, 255, 0.5);
+      border-bottom-color: #5ddcff;
     }
 
     .markdown-body strong {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .markdown-body em {
-      color: var(--text-secondary);
+      color: #f0f1f3;
     }
 
     .markdown-body code {
-      font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+      font-family: "SF Mono", Monaco, Consolas, monospace;
       font-size: 0.85em;
-      background: var(--code-bg);
+      background: rgba(93, 220, 255, 0.1);
       padding: 0.2rem 0.45rem;
       border-radius: 0.35rem;
-      border: 1px solid var(--code-border);
-      color: var(--accent);
-      transition: all var(--transition);
+      border: 1px solid rgba(93, 220, 255, 0.15);
+      color: #5ddcff;
     }
 
     .markdown-body pre {
-      background: var(--code-bg);
-      border-radius: 0.75rem;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 0.5rem;
       padding: 1rem 1.25rem;
       overflow-x: auto;
-      border: 1px solid var(--code-border);
-      transition: all var(--transition);
+      border: 1px solid rgba(93, 220, 255, 0.1);
     }
 
     .markdown-body pre code {
       padding: 0;
       border: 0;
       background: transparent;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
+      color: #a5b4c8;
     }
 
     .markdown-body ul,
     .markdown-body ol {
       padding-left: 1.5rem;
       margin: 0.75rem 0;
-      color: var(--text-secondary);
-    }
-
-    .markdown-body li {
-      margin: 0.35rem 0;
     }
 
     .markdown-body li::marker {
-      color: var(--muted);
-    }
-
-    .markdown-body hr {
-      border: none;
-      height: 1px;
-      background: var(--border-subtle);
-      margin: 2rem 0;
-    }
-
-    .markdown-body blockquote {
-      margin: 1rem 0;
-      padding: 0.75rem 1.25rem;
-      border-left: 3px solid var(--accent);
-      background: var(--accent-glow);
-      border-radius: 0 0.5rem 0.5rem 0;
-      color: var(--text-secondary);
+      color: #5ddcff;
     }
 
     .markdown-body table {
@@ -302,71 +353,90 @@
       width: 100%;
       margin: 1rem 0;
       font-size: 0.875rem;
-      border-radius: 0.5rem;
-      overflow: hidden;
-      border: 1px solid var(--border-subtle);
+      border: 1px solid rgba(93, 220, 255, 0.15);
     }
 
     .markdown-body th,
     .markdown-body td {
-      border: 1px solid var(--border-subtle);
+      border: 1px solid rgba(93, 220, 255, 0.1);
       padding: 0.6rem 0.85rem;
       text-align: left;
-      transition: all var(--transition);
     }
 
     .markdown-body th {
-      background: var(--table-header);
+      background: rgba(93, 220, 255, 0.08);
       font-weight: 600;
-      color: var(--text);
-    }
-
-    .markdown-body td {
-      color: var(--text-secondary);
+      color: #7dd3fc;
     }
 
     .markdown-body tr:nth-child(even) td {
-      background: var(--table-row-alt);
+      background: rgba(93, 220, 255, 0.03);
     }
 
     .status {
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid rgba(93, 220, 255, 0.1);
       font-size: 0.8rem;
-      color: var(--muted);
+      color: #6b7a8c;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      transition: all var(--transition);
     }
 
     .status-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      flex-shrink: 0;
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
     }
 
     .status.error .status-dot {
-      background: var(--error);
-      box-shadow: 0 0 8px var(--error);
+      background: #f87171;
+      box-shadow: 0 0 10px rgba(248, 113, 113, 0.8);
+    }
+
+    .lightning {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      filter: drop-shadow(0 0 3px #5ddcff) drop-shadow(0 0 10px rgba(93, 220, 255, 0.8));
+    }
+
+    .lightning-left {
+      left: -30px;
+      top: 20%;
+      animation: strikeBolt 6s ease-in-out infinite;
+    }
+
+    .lightning-right {
+      right: -30px;
+      top: 40%;
+      transform: scaleX(-1);
+      animation: strikeBolt 6s ease-in-out infinite 3s;
+    }
+
+    @keyframes strikeBolt {
+      0%, 100% { opacity: 0; }
+      45% { opacity: 0; }
+      46% { opacity: 1; }
+      48% { opacity: 0.3; }
+      49% { opacity: 1; }
+      52% { opacity: 0; }
     }
 
     @media (max-width: 640px) {
       body {
-        padding: 1rem;
+        padding: 1.25rem 0.75rem;
       }
 
       .inner {
-        padding: 1.25rem 1.25rem 1.5rem;
+        padding: 1.5rem 1.25rem;
       }
 
       .markdown-body {
         padding: 1.25rem;
-        border-radius: 0.75rem;
       }
 
       header {
@@ -375,9 +445,8 @@
         gap: 0.75rem;
       }
 
-      .header-controls {
-        width: 100%;
-        justify-content: space-between;
+      .lightning {
+        display: none;
       }
     }
   </style>
@@ -387,11 +456,22 @@
 </head>
 <body>
   <div class="shell">
+    <svg class="lightning lightning-left" width="40" height="80" viewBox="0 0 40 80">
+      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" 
+            fill="#5ddcff" />
+    </svg>
+    <svg class="lightning lightning-right" width="40" height="80" viewBox="0 0 40 80">
+      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" 
+            fill="#5ddcff" />
+    </svg>
+
     <div class="inner">
       <header>
-        <div class="title">The One File · README</div>
+        <div>
+          <div class="title">⚔ The One File</div>
+          <div class="tagline">"In the End, there can be only one"</div>
+        </div>
         <div class="header-controls">
-          <button id="theme-toggle" class="theme-toggle">Light Mode</button>
           <div class="badge">
             <span class="badge-dot"></span>
             <span>README.md</span>
@@ -434,7 +514,7 @@
       async function loadReadme() {
         try {
           if (!window.marked || !window.DOMPurify) {
-            setStatus("Markdown renderer not ready. Check script loading.", true);
+            setStatus("Markdown renderer not ready.", true);
             return;
           }
 
@@ -446,9 +526,7 @@
             headers: { "Accept": "text/plain, text/markdown;q=0.9,*/*;q=0.8" }
           });
 
-          if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-          }
+          if (!response.ok) throw new Error("HTTP " + response.status);
 
           const markdown = await response.text();
 
@@ -459,55 +537,22 @@
           }
 
           if (typeof marked.setOptions === "function") {
-            marked.setOptions({
-              gfm: true,
-              breaks: false,
-              headerIds: true,
-              mangle: false
-            });
+            marked.setOptions({ gfm: true, breaks: false, headerIds: true, mangle: false });
           }
 
           const rawHtml = marked.parse(markdown);
-          const safeHtml = DOMPurify.sanitize(rawHtml, {
-            USE_PROFILES: { html: true }
-          });
+          const safeHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
 
           readmeEl.innerHTML = safeHtml;
-          setStatus("README.md loaded successfully.", false);
+          setStatus("The Quickening is complete.", false);
         } catch (err) {
           console.error("Failed to load README:", err);
           readmeEl.textContent = "Could not load README.md.";
-          setStatus("Error loading README.md. See console for details.", true);
+          setStatus("Error loading README.md.", true);
         }
       }
 
       window.addEventListener("load", loadReadme);
-    })();
-  </script>
-  <script>
-    (() => {
-      "use strict";
-
-      const root = document.documentElement;
-      const toggleBtn = document.getElementById("theme-toggle");
-
-      const saved = localStorage.getItem("theme");
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const current = saved || (systemDark ? "dark" : "light");
-
-      root.setAttribute("data-theme", current);
-      updateBtn(current);
-
-      toggleBtn.addEventListener("click", () => {
-        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        root.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-        updateBtn(next);
-      });
-
-      function updateBtn(theme) {
-        toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
-      }
     })();
   </script>
 </body>
