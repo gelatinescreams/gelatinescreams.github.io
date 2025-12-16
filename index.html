@@ -7,6 +7,10 @@
   <meta name="keywords" content="single file network topology editor, offline network diagram tool, self contained network diagram, html network diagram editor, portable network topology tool, offline network documentation, air gapped network diagram, network topology single html file, editable network diagram offline, view and edit network diagrams in browser, offline first network topology, encrypted network documentation, aes 256 encrypted network diagrams, browser based network diagram editor, zero dependency network diagram tool, no server network documentation, homelab network diagram, enterprise network topology documentation, rack diagram offline, vlan network diagram, subnet planning diagram, break glass network documentation, disaster recovery network documentation, air gapped infrastructure documentation, offline encrypted documentation, browser native encryption tool, web crypto api aes gcm, secure network topology editor, no cloud network documentation, client side encrypted diagrams, editable html diagram, network diagram with custom icons, live network status monitoring diagram, ping monitoring network map, responsive network diagram editor, mobile network diagram tool">
   <meta name="author" content="GelatineScreams">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+
   <style>
     @property --rotate {
       syntax: "<angle>";
@@ -85,6 +89,7 @@
     body {
       margin: 0;
       min-height: 100vh;
+	  font-family: 'MedievalSharp';
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -93,7 +98,7 @@
       overflow-x: hidden;
       transition: background var(--transition), color var(--transition);
 	  font-family: 'MedievalSharp', cursive;
-      font-size: 0.8rem;
+      font-size: 1rem;
     }
 
     body::before {
