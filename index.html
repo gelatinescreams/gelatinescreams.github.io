@@ -332,6 +332,17 @@
       transition: all var(--transition);
     }
 
+    .badge2 {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.4rem 0.85rem;
+      color: var(--accent);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all var(--transition);
+    }
+	
     .badge-dot {
       width: 6px;
       height: 6px;
@@ -582,6 +593,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
 </head>
 <body>
   <div class="shell">
@@ -613,9 +625,10 @@
         </div>
         <div class="header-controls">
           <button id="theme-toggle" class="theme-toggle">Light Mode</button>
-          <div class="badge">
-            <span class="badge-dot"></span>
-            <span>GitHub status</span>
+          <div class="badge2">
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/archive/HEAD.zip" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Download gelatinescreams/The-One-File on GitHub">Download</a>
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large" aria-label="Star gelatinescreams/The-One-File on GitHub">Star</a>
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/subscription" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-eye" data-size="large" aria-label="Watch gelatinescreams/The-One-File on GitHub">Watch</a>
           </div>
         </div>
       </header>
@@ -629,6 +642,13 @@
         <span>Fetching README from repository root.</span>
       </div>
     </div>
+	<div>
+          <div class="badge2">
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/archive/HEAD.zip" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Download gelatinescreams/The-One-File on GitHub">Download</a>
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large" aria-label="Star gelatinescreams/The-One-File on GitHub">Star</a>
+		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/subscription" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-eye" data-size="large" aria-label="Watch gelatinescreams/The-One-File on GitHub">Watch</a>
+          </div>
+	</div>
   </div>
 
   <script>
