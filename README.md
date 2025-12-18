@@ -13,20 +13,28 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ![The One File](assets/corporate-preview.gif) ![The One File](assets/homelab-preview.gif) ![The One File](assets/mobilepreviews.jpg)
 
-### Version 3.9.9.5 : 12/13/25 The ports enhancements update
-
-* **Very close to 4.0 Stable** Thank you to all the testers
-* **New: 3.9.9.5** The ports enhancements update [changelog.md](changelog.md) for more information
-* **Added Dedicated Ports Tab** Easily view and navigate the canvas using the new ports tab. Also includes csv export option
-* **Added View Only Mode in Settings** Disables all editing while keeping pan and zoom
-* * Click or tap any canvas item five times to inspect its details while in View Only Mode
-* **Upgraded and fixed the Audit log.** Moved it to the stored JSON. Audit log now transfers with the save!
-* * Added smart migration to merge old localStorage audit with new JSON storage
-* **Added new core shapes to both versions.**
-* **New desktop mutli entity select option added.**
-* * Hold shift and click+drag on empty canvas to select multiple items at once
-* * Selection box colors can be customized in Settings
-* **Squashing more bugs** [#19](https://github.com/gelatinescreams/The-One-File/issues/19) [#20](https://github.com/gelatinescreams/The-One-File/issues/20) [#21](https://github.com/gelatinescreams/The-One-File/issues/21)  + more : Special thanks to @mitchplze
+#### Version 3.9.9.6 : 12/17/25 Stretching version numbers AND lines too!
+  * We are very close to 4.0 Stable, community! Thank you to all the testers!!
+* **Orthogonal routing update** [changelog.md](changelog.md)
+  * New orthogonal routing option draws clean 90 degree angle connections
+  * Three routing styles available: Orthogonal, Curved, and Straight
+  * Change between all of them in the settings at any time OR mix and match them   
+* **Auto Recovery**
+  * If your browser crashes or you accidentally close the tab, your work is saved in your local browser
+  * If you want to clear this cache, use the Clear All option in settings
+* **Enhanced Search** : Search now zooms in and out of the canvas automatically to group found items
+* **Mobile Undo** : Add three finder tap anywhere on the canvas for undo on mobile devices
+* **Performance Under The Hood**
+  * Multiple rapid changes are now batched into single redraws
+  * Minimap updates are throttled during pan and zoom
+  * Drop shadows and pulse animations automatically disabled when zoomed out below 50 percent
+  * Mouse and touch pan handlers optimized to prevent layout thrashing
+  * CSS containment added to panels and viewport for faster rendering
+  * Undo performance updates
+  * Minimap performance updates
+  * Custom Orthogonal gap function : edges show gaps where they cross other orthogonal edges
+  * Refactored update/import function
+* **Big performance update**  
 * **See more changes in the [changelog.md](changelog.md)**
 
 ### Demos
@@ -69,10 +77,10 @@ A fully self contained topology builder that runs anywhere as a single standalon
 
 ### Download:
 
-* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24156577/the-one-file-corporate-demo.html)
-* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24156578/the-one-file-homelab-demo.html)
-* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24156579/theonefile-networkening-corporate-demo.html)
-* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24156580/theonefile-networkening-homelab-demo.html)
+* [the-one-file-corporate-demo.html](https://github.com/user-attachments/files/24225585/the-one-file-corporate-demo.html)
+* [the-one-file-homelab-demo.html](https://github.com/user-attachments/files/24225587/the-one-file-homelab-demo.html)
+* [theonefile-networkening-corporate-demo.html](https://github.com/user-attachments/files/24225588/theonefile-networkening-corporate-demo.html)
+* [theonefile-networkening-homelab-demo.html](https://github.com/user-attachments/files/24225589/theonefile-networkening-homelab-demo.html)
 
 
 ### Why It Exists
