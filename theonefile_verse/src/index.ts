@@ -5,7 +5,9 @@ import * as redis from "./redis";
 import * as auth from "./auth";
 import * as oidc from "./oidc";
 import * as mailer from "./mailer";
+import pkg from "../package.json";
 
+const APP_VERSION = pkg.version || "unknown";
 const PORT = parseInt(process.env.PORT || "10101");
 const DATA_DIR = process.env.DATA_DIR || "./data";
 const ROOMS_DIR = join(DATA_DIR, "rooms");
@@ -20,6 +22,13 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
 
 function isValidUUID(id: string): boolean {
   return UUID_REGEX.test(id);
+}
+
+interface WsData {
+  roomId?: string;
+  connectionId?: string;
+  userId?: string;
+  verifiedUserId?: string;
 }
 
 interface RateLimitEntry {
@@ -38,6 +47,7 @@ const WS_RATE_LIMITS = {
   state: { bucketSize: 10, refillRate: 2 },
   chat: { bucketSize: 5, refillRate: 1 },
   cursor: { bucketSize: 30, refillRate: 15 },
+  typing: { bucketSize: 5, refillRate: 1 },
   presence: { bucketSize: 20, refillRate: 5 },
   default: { bucketSize: 20, refillRate: 5 }
 };
@@ -86,6 +96,22 @@ async function checkRateLimit(ip: string, endpoint: string, settings: InstanceSe
     return await redis.checkRateLimitRedis(key, settings.rateLimitMaxAttempts, settings.rateLimitWindow);
   }
 
+  if (rateLimitStore.size > 10000) {
+    const now = Date.now();
+    for (const [k, v] of rateLimitStore.entries()) {
+      if (now > v.resetAt) rateLimitStore.delete(k);
+    }
+    if (rateLimitStore.size > 10000) {
+      let removed = 0;
+      const target = rateLimitStore.size - 5000;
+      for (const [k] of rateLimitStore.entries()) {
+        if (removed >= target) break;
+        rateLimitStore.delete(k);
+        removed++;
+      }
+    }
+  }
+
   const now = Date.now();
   const entry = rateLimitStore.get(key);
   const window = settings.rateLimitWindow * 1000;
@@ -128,11 +154,20 @@ async function checkEmailRateLimit(email: string, action: string, settings: Inst
   return true;
 }
 
+const IPV4_REGEX = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_REGEX = /^([\da-fA-F]{0,4}:){2,7}[\da-fA-F]{0,4}$/;
+
+function isValidIP(ip: string): boolean {
+  return IPV4_REGEX.test(ip) || IPV6_REGEX.test(ip) || ip === '::1';
+}
+
 function getClientIP(req: Request): string {
   const xForwardedFor = req.headers.get("x-forwarded-for");
 
   if (xForwardedFor) {
-    const ips = xForwardedFor.split(",").map(ip => ip.trim());
+    const ips = xForwardedFor.split(",").map(ip => ip.trim()).filter(isValidIP);
+
+    if (ips.length === 0) return "unknown";
 
     if (instanceSettings.trustedProxies.length > 0) {
       for (let i = ips.length - 1; i >= 0; i--) {
@@ -150,7 +185,9 @@ function getClientIP(req: Request): string {
     return ips[0];
   }
 
-  return req.headers.get("x-real-ip") || "unknown";
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp && isValidIP(realIp.trim())) return realIp.trim();
+  return "unknown";
 }
 
 setInterval(() => {
@@ -178,6 +215,8 @@ function getSecurityHeaders(isAdminPage: boolean = false): Record<string, string
 
   if (isAdminPage) {
     headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+  } else {
+    headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' wss: ws:; frame-ancestors 'none'; base-uri 'self'";
   }
 
   return headers;
@@ -254,7 +293,7 @@ function loadSettings(): InstanceSettings {
       try {
         const saved = JSON.parse(readFileSync(SETTINGS_PATH, "utf-8"));
         return { ...defaultSettings, ...saved };
-      } catch { return { ...defaultSettings }; }
+      } catch (e: any) { console.error("[Settings]", e.message); return { ...defaultSettings }; }
     }
     return { ...defaultSettings };
   }
@@ -285,7 +324,7 @@ function loadAdminConfig(): AdminConfig | null {
   const createdAt = db.getSetting("admin_created_at");
   if (!hash) {
     if (existsSync(ADMIN_CONFIG_PATH)) {
-      try { return JSON.parse(readFileSync(ADMIN_CONFIG_PATH, "utf-8")); } catch { return null; }
+      try { return JSON.parse(readFileSync(ADMIN_CONFIG_PATH, "utf-8")); } catch (e: any) { console.error("[Config]", e.message); return null; }
     }
     return null;
   }
@@ -307,12 +346,13 @@ function needsAdminMigration(): boolean {
 
 async function verifyAdminPassword(password: string): Promise<boolean> {
   if (ENV_ADMIN_PASSWORD) {
-    if (password.length !== ENV_ADMIN_PASSWORD.length) return false;
-    let result = 0;
-    for (let i = 0; i < password.length; i++) {
-      result |= password.charCodeAt(i) ^ ENV_ADMIN_PASSWORD.charCodeAt(i);
-    }
-    return result === 0;
+    const maxLen = Math.max(password.length, ENV_ADMIN_PASSWORD.length);
+    const padded = Buffer.alloc(maxLen, 0);
+    const expected = Buffer.alloc(maxLen, 0);
+    Buffer.from(password).copy(padded);
+    Buffer.from(ENV_ADMIN_PASSWORD).copy(expected);
+    const match = crypto.timingSafeEqual(padded, expected);
+    return match && password.length === ENV_ADMIN_PASSWORD.length;
   }
   const config = loadAdminConfig();
   if (!config) return false;
@@ -436,7 +476,13 @@ setInterval(() => {
       ADMIN_TOKENS.delete(token);
     }
   }
-}, 60 * 60 * 1000);
+  if (ADMIN_TOKENS.size > 10000) {
+    const sorted = [...ADMIN_TOKENS.entries()].sort((a, b) => a[1].createdAt - b[1].createdAt);
+    for (let i = 0; i < sorted.length - 5000; i++) {
+      ADMIN_TOKENS.delete(sorted[i][0]);
+    }
+  }
+}, 10 * 60 * 1000);
 
 function getTokenFromRequest(req: Request): string | null {
   const cookie = req.headers.get("cookie") || "";
@@ -507,8 +553,29 @@ function validateAdminPath(newPath: string): { valid: boolean; error?: string } 
   return { valid: true };
 }
 
+function isValidWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]') return false;
+    if (hostname === '169.254.169.254' || hostname === 'metadata.google.internal') return false;
+    if (/^10\./.test(hostname)) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false;
+    if (/^192\.168\./.test(hostname)) return false;
+    if (/^0\./.test(hostname) || hostname === '0.0.0.0') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function sendWebhook(event: string, data: any): Promise<void> {
   if (!instanceSettings.webhookEnabled || !instanceSettings.webhookUrl) return;
+  if (!isValidWebhookUrl(instanceSettings.webhookUrl)) {
+    console.error('[Webhook] Blocked request to disallowed URL:', instanceSettings.webhookUrl);
+    return;
+  }
   try {
     await fetch(instanceSettings.webhookUrl, {
       method: "POST",
@@ -544,7 +611,7 @@ async function createBackup(autoGenerated: boolean = false): Promise<{ id: strin
       }
     }
     return { id, filename, size };
-  } catch { return null; }
+  } catch (e: any) { console.error("[Backup]", e.message); return null; }
 }
 
 async function restoreBackup(backupId: string): Promise<{ success: boolean; error?: string; roomsRestored?: number }> {
@@ -566,7 +633,7 @@ async function restoreBackup(backupId: string): Promise<{ success: boolean; erro
       }
     }
     return { success: true, roomsRestored };
-  } catch { return { success: false, error: "Failed to parse backup" }; }
+  } catch (e: any) { console.error("[Backup]", e.message); return { success: false, error: "Failed to parse backup" }; }
 }
 
 let backupTimer: Timer | null = null;
@@ -644,8 +711,7 @@ const setupPageHtml = `<!DOCTYPE html>
     </form>
   </div>
   <script>
-    (function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
-    const email=document.getElementById('email'),pwd=document.getElementById('password'),confirm=document.getElementById('confirm'),btn=document.getElementById('submit-btn'),error=document.getElementById('error');
+    (function(){let f=null;function g(){if(f&&f!=='user')return f;return localStorage.getItem('theme')||'dark'}function s(t){document.documentElement.setAttribute('data-theme',t)}s(g());fetch('/api/theme').then(r=>r.json()).then(d=>{if(d.forcedTheme&&d.forcedTheme!=='user'){f=d.forcedTheme;s(f)}}).catch(()=>{})})();
     fetch('/api/auth/providers').then(r=>r.json()).then(providers=>{
       if(providers.length>0){
         document.getElementById('divider').style.display='flex';
@@ -654,19 +720,24 @@ const setupPageHtml = `<!DOCTYPE html>
           const btn=document.createElement('button');
           btn.type='button';
           btn.className='oidc-btn';
-          btn.innerHTML=(p.iconUrl?'<img src="'+p.iconUrl+'" width="20" height="20">':'')+' Continue with '+p.name;
+          if(p.iconUrl&&(p.iconUrl.startsWith('http://')||p.iconUrl.startsWith('https://'))){const img=document.createElement('img');img.src=p.iconUrl;img.width=20;img.height=20;btn.appendChild(img);}btn.appendChild(document.createTextNode(' Continue with '+(p.name||'')));
           btn.onclick=()=>window.location.href='/api/auth/oidc/'+p.id+'/login';
           container.appendChild(btn);
         });
       }
     }).catch(()=>{});
     document.getElementById('setup-form').addEventListener('submit',async(e)=>{
-      e.preventDefault();error.classList.remove('active');
-      if(!email.value||!email.value.includes('@')){error.textContent='Please enter a valid email';error.classList.add('active');return}
-      if(pwd.value.length<8){error.textContent='Password must be at least 8 characters';error.classList.add('active');return}
-      if(pwd.value!==confirm.value){error.textContent='Passwords do not match';error.classList.add('active');return}
+      e.preventDefault();
+      const error=document.getElementById('error');
+      error.classList.remove('active');
+      const email=document.getElementById('email').value;
+      const pwd=document.getElementById('password').value;
+      const confirmVal=document.getElementById('confirm').value;
+      if(!email||!email.includes('@')){error.textContent='Please enter a valid email';error.classList.add('active');return}
+      if(pwd.length<8){error.textContent='Password must be at least 8 characters';error.classList.add('active');return}
+      if(pwd!==confirmVal){error.textContent='Passwords do not match';error.classList.add('active');return}
       try{
-        const res=await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.value,password:pwd.value})});
+        const res=await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pwd})});
         const d=await res.json();
         if(res.ok&&d.success){window.location.href='/admin'}
         else{error.textContent=d.error||'Setup failed';error.classList.add('active')}
@@ -717,7 +788,7 @@ const migrationPageHtml = `<!DOCTYPE html>
     </form>
   </div>
   <script>
-    (function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'dark')})();
+    (function(){let f=null;function g(){if(f&&f!=='user')return f;return localStorage.getItem('theme')||'dark'}function s(t){document.documentElement.setAttribute('data-theme',t)}s(g());fetch('/api/theme').then(r=>r.json()).then(d=>{if(d.forcedTheme&&d.forcedTheme!=='user'){f=d.forcedTheme;s(f)}}).catch(()=>{})})();
     const oldPwd=document.getElementById('old-password'),email=document.getElementById('email'),newPwd=document.getElementById('new-password'),error=document.getElementById('error');
     document.getElementById('migrate-form').addEventListener('submit',async(e)=>{
       e.preventDefault();error.classList.remove('active');
@@ -891,7 +962,7 @@ const userLoginHtml = `<!DOCTYPE html>
           const btn=document.createElement('button');
           btn.type='button';
           btn.className='oidc-btn';
-          btn.innerHTML=(p.iconUrl?'<img src="'+p.iconUrl+'" width="20" height="20">':'')+' Continue with '+p.name;
+          if(p.iconUrl&&(p.iconUrl.startsWith('http://')||p.iconUrl.startsWith('https://'))){const img=document.createElement('img');img.src=p.iconUrl;img.width=20;img.height=20;btn.appendChild(img);}btn.appendChild(document.createTextNode(' Continue with '+(p.name||'')));
           btn.onclick=()=>window.location.href='/api/auth/oidc/'+p.id+'/login';
           container.appendChild(btn);
         });
@@ -995,7 +1066,7 @@ const userRegisterHtml = `<!DOCTYPE html>
           const btn=document.createElement('button');
           btn.type='button';
           btn.className='oidc-btn';
-          btn.innerHTML=(p.iconUrl?'<img src="'+p.iconUrl+'" width="20" height="20">':'')+' Continue with '+p.name;
+          if(p.iconUrl&&(p.iconUrl.startsWith('http://')||p.iconUrl.startsWith('https://'))){const img=document.createElement('img');img.src=p.iconUrl;img.width=20;img.height=20;btn.appendChild(img);}btn.appendChild(document.createTextNode(' Continue with '+(p.name||'')));
           btn.onclick=()=>window.location.href='/api/auth/oidc/'+p.id+'/login';
           container.appendChild(btn);
         });
@@ -1381,7 +1452,7 @@ const adminDashboardHtml = `<!DOCTYPE html>
         <div class="setting-row">
           <div class="setting-info"><div class="setting-label">Source Mode</div><div class="setting-desc">Choose where to load TheOneFile from</div></div>
           <div class="setting-control">
-            <select id="source-mode" onchange="changeSourceMode()"><option value="github">GitHub (Auto-Update)</option><option value="local">Local (Manual Upload)</option></select>
+            <select id="source-mode" onchange="changeSourceMode()"><option value="github">GitHub (Auto Update)</option><option value="local">Local (Manual Upload)</option></select>
           </div>
         </div>
         <div class="setting-row" id="github-settings">
@@ -1717,6 +1788,7 @@ const adminDashboardHtml = `<!DOCTYPE html>
     function updateThemeToggleVisibility(){const btn=document.getElementById('theme-toggle');if(forcedTheme&&forcedTheme!=='user')btn.style.display='none';else btn.style.display='block'}
     setTheme(getTheme());
     fetch('/api/theme').then(r=>r.json()).then(data=>{if(data.forcedTheme&&data.forcedTheme!=='user'){forcedTheme=data.forcedTheme;setTheme(forcedTheme)}updateThemeToggleVisibility()}).catch(()=>updateThemeToggleVisibility());
+    function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
     let rooms=[],selected=new Set(),settings={},totalRooms=0,searchTimeout=null,users=[],authSettings={},oidcProviders=[],smtpConfigs=[],emailLogs=[];
     function showTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelector('.tab-content#tab-'+name).classList.add('active');document.querySelector('.tab[onclick*="'+name+'"]').classList.add('active');if(name==='settings')loadSettings();if(name==='logs'){loadActivityLogs();loadAuditLogs()}if(name==='backups')loadBackups();if(name==='apikeys')loadApiKeys();if(name==='users')loadUsers();if(name==='auth'){loadAuthSettings();loadOidcProviders();loadSmtpConfigs();loadEmailTemplates();loadEmailLogs()}}
     async function loadData(query=''){try{const url=query?'/api/admin/rooms?q='+encodeURIComponent(query):'/api/admin/rooms';const res=await fetch(url);if(!res.ok){if(res.status===401)window.location.href='/admin/login';return}const data=await res.json();rooms=data.rooms||data;totalRooms=data.total||rooms.length;renderStats();renderRooms();updateBulkUI()}catch(e){console.error(e)}}
@@ -1916,7 +1988,7 @@ const adminDashboardHtml = `<!DOCTYPE html>
     function showAuthStatus(msg,type){const el=document.getElementById('auth-status');el.innerHTML='<div class="status-msg '+type+'">'+msg+'</div>';setTimeout(()=>el.innerHTML='',3000)}
     async function loadOidcProviders(){try{const res=await fetch('/api/admin/oidc-providers');if(!res.ok)return;const data=await res.json();oidcProviders=data.providers||[];renderOidcProviders()}catch{}}
     function renderOidcProviders(){const el=document.getElementById('oidc-provider-list');if(!oidcProviders||oidcProviders.length===0){el.innerHTML='<p style="color:var(--text-soft);padding:12px">No OIDC providers configured</p>';return}
-    el.innerHTML=oidcProviders.map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:500">'+p.name+'</div><div style="font-size:12px;color:var(--text-soft)">'+p.providerType+' | '+(p.isActive?'<span style="color:#22c55e">Active</span>':'<span style="color:#94a3b8">Inactive</span>')+'</div></div><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="editOidcProvider(\\''+p.id+'\\')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteOidcProvider(\\''+p.id+'\\')">Delete</button></div></div>').join('')}
+    el.innerHTML=oidcProviders.map(p=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:500">'+esc(p.name)+'</div><div style="font-size:12px;color:var(--text-soft)">'+esc(p.providerType)+' | '+(p.isActive?'<span style="color:#22c55e">Active</span>':'<span style="color:#94a3b8">Inactive</span>')+'</div></div><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="editOidcProvider(\\''+p.id+'\\')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteOidcProvider(\\''+p.id+'\\')">Delete</button></div></div>').join('')}
     function showAddOidcProvider(){document.getElementById('oidc-modal-title').textContent='Add OIDC Provider';document.getElementById('oidc-edit-id').value='';document.getElementById('oidc-name').value='';document.getElementById('oidc-type').value='generic';document.getElementById('oidc-client-id').value='';document.getElementById('oidc-client-secret').value='';document.getElementById('oidc-issuer').value='';document.getElementById('oidc-auth-url').value='';document.getElementById('oidc-token-url').value='';document.getElementById('oidc-userinfo-url').value='';document.getElementById('oidc-scopes').value='openid email profile';document.getElementById('oidc-active').checked=true;document.getElementById('oidc-modal').classList.add('active')}
     function editOidcProvider(id){const p=oidcProviders.find(x=>x.id===id);if(!p)return;document.getElementById('oidc-modal-title').textContent='Edit OIDC Provider';document.getElementById('oidc-edit-id').value=id;document.getElementById('oidc-name').value=p.name;document.getElementById('oidc-type').value=p.providerType;document.getElementById('oidc-client-id').value=p.clientId;document.getElementById('oidc-client-secret').value='';document.getElementById('oidc-issuer').value=p.issuerUrl||'';document.getElementById('oidc-auth-url').value=p.authorizationUrl||'';document.getElementById('oidc-token-url').value=p.tokenUrl||'';document.getElementById('oidc-userinfo-url').value=p.userinfoUrl||'';document.getElementById('oidc-scopes').value=p.scopes||'openid email profile';document.getElementById('oidc-active').checked=p.isActive;document.getElementById('oidc-modal').classList.add('active')}
     function closeOidcModal(){document.getElementById('oidc-modal').classList.remove('active')}
@@ -1936,7 +2008,7 @@ const adminDashboardHtml = `<!DOCTYPE html>
     let emailTemplates=[],currentEditTemplate=null,isHtmlSourceView=false;
     async function loadEmailTemplates(){try{const res=await fetch('/api/admin/email-templates');if(!res.ok)return;const data=await res.json();emailTemplates=data.templates||[];renderEmailTemplates(emailTemplates)}catch{}}
     function renderEmailTemplates(templates){const el=document.getElementById('email-template-list');if(!templates||templates.length===0){el.innerHTML='<p style="color:var(--text-soft);padding:12px">No email templates. Default templates will be used.</p>';return}
-    el.innerHTML=templates.map(t=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:500">'+t.name+'</div><div style="font-size:12px;color:var(--text-soft)">Subject: '+t.subject+'</div></div><button class="btn btn-sm btn-secondary" onclick="editTemplate(\\''+t.id+'\\')">Edit</button></div>').join('')}
+    el.innerHTML=templates.map(t=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:500">'+esc(t.name)+'</div><div style="font-size:12px;color:var(--text-soft)">Subject: '+esc(t.subject)+'</div></div><button class="btn btn-sm btn-secondary" onclick="editTemplate(\\''+esc(t.id)+'\\')">Edit</button></div>').join('')}
     function editTemplate(id){const t=emailTemplates.find(x=>x.id===id);if(!t)return;currentEditTemplate=t;document.getElementById('template-edit-id').value=id;document.getElementById('template-name').value=t.name;document.getElementById('template-subject').value=t.subject||'';document.getElementById('template-editor').innerHTML=t.bodyHtml||'';document.getElementById('template-html-source').value=t.bodyHtml||'';document.getElementById('template-text').value=t.bodyText||'';isHtmlSourceView=false;showWysiwygView();document.getElementById('template-modal').classList.add('active')}
     function closeTemplateModal(){document.getElementById('template-modal').classList.remove('active');currentEditTemplate=null}
     function showWysiwygView(){document.getElementById('template-editor').style.display='block';document.getElementById('template-editor-toolbar').style.display='flex';document.getElementById('template-html-source').style.display='none'}
@@ -1955,7 +2027,7 @@ const adminDashboardHtml = `<!DOCTYPE html>
     document.getElementById('template-preview-modal').addEventListener('click',e=>{if(e.target.id==='template-preview-modal')closeTemplatePreview()});
     async function loadEmailLogs(){try{const email=document.getElementById('email-log-search').value;const url=email?'/api/admin/email-logs?email='+encodeURIComponent(email):'/api/admin/email-logs';const res=await fetch(url);if(!res.ok)return;const data=await res.json();emailLogs=data.logs||[];renderEmailLogs()}catch{}}
     function renderEmailLogs(){const el=document.getElementById('email-log-list');if(!emailLogs||emailLogs.length===0){el.innerHTML='<p style="color:var(--text-soft);padding:12px">No email logs</p>';return}
-    el.innerHTML=emailLogs.map(l=>'<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-soft)">'+new Date(l.sentAt).toLocaleString()+'</span> <span class="badge badge-'+(l.status==='sent'?'green':'gray')+'">'+l.status+'</span> '+l.toEmail+' <span style="color:var(--text-soft)">'+l.subject+'</span>'+(l.errorMessage?' <span style="color:#ef4444">'+l.errorMessage+'</span>':'')+'</div>').join('')}
+    el.innerHTML=emailLogs.map(l=>'<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-soft)">'+esc(new Date(l.sentAt).toLocaleString())+'</span> <span class="badge badge-'+(l.status==='sent'?'green':'gray')+'">'+esc(l.status)+'</span> '+esc(l.toEmail)+' <span style="color:var(--text-soft)">'+esc(l.subject)+'</span>'+(l.errorMessage?' <span style="color:#ef4444">'+esc(l.errorMessage)+'</span>':'')+'</div>').join('')}
     async function clearEmailLogs(){if(!confirm('Clear all email logs? This cannot be undone.'))return;try{const res=await fetch('/api/admin/email-logs',{method:'DELETE'});if(res.ok){loadEmailLogs();showAuthStatus('Email logs cleared','success')}}catch{}}
     async function clearActivityLogs(){if(!confirm('Clear all activity logs? This cannot be undone.'))return;try{const res=await fetch('/api/admin/activity-logs',{method:'DELETE'});if(res.ok){loadActivityLogs();showAuthStatus('Activity logs cleared','success')}}catch{}}
     async function clearAuditLogs(){if(!confirm('Clear all audit logs? This cannot be undone.'))return;try{const res=await fetch('/api/admin/audit-logs',{method:'DELETE'});if(res.ok){loadAuditLogs();showAuthStatus('Audit logs cleared','success')}}catch{}}
@@ -2019,7 +2091,7 @@ const adminLoginHtml = `<!DOCTYPE html>
           const btn=document.createElement('button');
           btn.type='button';
           btn.className='oidc-btn';
-          btn.innerHTML=(p.iconUrl?'<img src="'+p.iconUrl+'" width="20" height="20">':'')+' Continue with '+p.name;
+          if(p.iconUrl&&(p.iconUrl.startsWith('http://')||p.iconUrl.startsWith('https://'))){const img=document.createElement('img');img.src=p.iconUrl;img.width=20;img.height=20;btn.appendChild(img);}btn.appendChild(document.createTextNode(' Continue with '+(p.name||'')));
           btn.onclick=()=>window.location.href='/api/auth/oidc/'+p.id+'/login?redirect=/admin';
           container.appendChild(btn);
         });
@@ -2084,13 +2156,14 @@ function getPasswordResetHtml(token: string): string {
     document.getElementById('form').addEventListener('submit',async(e)=>{
       e.preventDefault();
       const pw=document.getElementById('password').value;
-      const confirm=document.getElementById('confirm').value;
+      const confirmVal=document.getElementById('confirm').value;
       const err=document.getElementById('error');
       err.classList.remove('active');
-      if(pw!==confirm){err.textContent='Passwords do not match';err.classList.add('active');return}
+      if(pw!==confirmVal){err.textContent='Passwords do not match';err.classList.add('active');return}
       if(pw.length<8){err.textContent='Password must be at least 8 characters';err.classList.add('active');return}
       try{
-        const res=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'${token}',password:pw})});
+        const csrfRes=await fetch('/api/auth/csrf');const csrfData=await csrfRes.json();
+        const res=await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'${token}',password:pw,csrfToken:csrfData.token})});
         const data=await res.json();
         if(data.success){document.getElementById('form').style.display='none';document.getElementById('success').classList.add('active')}
         else{err.textContent=data.error||'Failed to reset password';err.classList.add('active')}
@@ -2125,6 +2198,7 @@ const roomMeta: Map<string, RoomMeta> = new Map();
 const roomConnections: Map<string, Set<any>> = new Map();
 const roomUsers: Map<string, Map<string, any>> = new Map();
 const roomUsedNames: Map<string, Map<string, string>> = new Map();
+const roomChatHistory: Map<string, any[]> = new Map();
 
 async function hashPassword(password: string): Promise<string> {
   return await Bun.password.hash(password, {
@@ -2167,6 +2241,7 @@ function deleteRoomData(id: string): boolean {
   if (result) {
     roomMeta.delete(id);
     roomUsedNames.delete(id);
+    roomChatHistory.delete(id);
     if (redis.isRedisConnected()) {
       redis.deleteRoomStateCache(id);
     }
@@ -2180,7 +2255,7 @@ function scheduleDestruction(roomId: string, delayMs: number): void {
   meta.destructTimer = setTimeout(() => {
     const room = loadRoom(roomId);
     if (room && room.destruct.mode === "time") {
-      console.log(`[Room] ${roomId} self-destructed`);
+      console.log(`[Room] ${roomId} self destructed`);
       deleteRoomData(roomId);
     }
   }, delayMs);
@@ -2396,7 +2471,7 @@ async function fetchLatestFromGitHub(): Promise<boolean> {
     theOneFileHtml = html;
     console.log(`[Update] Downloaded (${(html.length / 1024).toFixed(1)}KB)`);
     return true;
-  } catch { return false; }
+  } catch (e: any) { console.error("[Update]", e.message); return false; }
 }
 
 let updateTimer: Timer | null = null;
@@ -2406,7 +2481,7 @@ function restartUpdateTimer(): void {
   updateTimer = null;
   if (instanceSettings.updateIntervalHours > 0 && !instanceSettings.skipUpdates) {
     updateTimer = setInterval(() => { fetchLatestFromGitHub(); }, instanceSettings.updateIntervalHours * 60 * 60 * 1000);
-    console.log(`[Update] Auto-update every ${instanceSettings.updateIntervalHours} hours`);
+    console.log(`[Update] Auto update every ${instanceSettings.updateIntervalHours} hours`);
   }
 }
 
@@ -2425,6 +2500,17 @@ if (instanceSettings.skipUpdates) {
 
 restartUpdateTimer();
 
+const wsConnectionCounts = new Map<string, { count: number; resetAt: number }>();
+const MAX_WS_CONNECTIONS_PER_IP = 50;
+const WS_CONNECTION_WINDOW = 3600 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of wsConnectionCounts.entries()) {
+    if (now > entry.resetAt) wsConnectionCounts.delete(ip);
+  }
+}, 5 * 60 * 1000);
+
 const server = Bun.serve({
   port: PORT,
   async fetch(req, server) {
@@ -2432,6 +2518,18 @@ const server = Bun.serve({
     const path = url.pathname;
     
     if (path.match(/^\/ws\/[\w-]+$/)) {
+      const clientIp = getClientIP(req);
+      const now = Date.now();
+      const wsEntry = wsConnectionCounts.get(clientIp);
+      if (wsEntry && now < wsEntry.resetAt && wsEntry.count >= MAX_WS_CONNECTIONS_PER_IP) {
+        return new Response("Too many WebSocket connections", { status: 429 });
+      }
+      if (!wsEntry || now > wsEntry.resetAt) {
+        wsConnectionCounts.set(clientIp, { count: 1, resetAt: now + WS_CONNECTION_WINDOW });
+      } else {
+        wsEntry.count++;
+      }
+
       const roomId = path.split("/")[2];
       if (!isValidUUID(roomId)) {
         return new Response("Invalid room ID", { status: 400 });
@@ -2477,7 +2575,7 @@ const server = Bun.serve({
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": allowedOrigin,
-      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Credentials": "true",
       ...securityHeaders
@@ -2518,13 +2616,15 @@ const server = Bun.serve({
         if (!result.success) {
           return Response.json({ error: result.error || "Registration failed" }, { status: 400, headers: corsHeaders });
         }
-        const clientIP = getClientIP(req);
         const loginResult = await auth.loginWithPassword(body.email, body.password, clientIP, req.headers.get("user-agent") || "");
         if (!loginResult.success || !loginResult.sessionToken) {
           return Response.json({ error: "Account created but login failed" }, { status: 400, headers: corsHeaders });
         }
-        return Response.json({ success: true, sessionToken: loginResult.sessionToken }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json",
+            "Set-Cookie": oidc.getSessionCookie("user_token", loginResult.sessionToken) }
+        });
+      } catch (e: any) { console.error("[Setup]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     const adminPath = getAdminPath();
@@ -2583,7 +2683,7 @@ const server = Bun.serve({
           headers: { ...corsHeaders, "Content-Type": "application/json",
             "Set-Cookie": oidc.getSessionCookie("user_token", result.sessionToken) }
         });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[AdminLogin]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/admin/migrate" && req.method === "POST") {
@@ -2626,7 +2726,7 @@ const server = Bun.serve({
           headers: { ...corsHeaders, "Content-Type": "application/json",
             "Set-Cookie": oidc.getSessionCookie("user_token", loginResult.sessionToken) }
         });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[AdminMigrate]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/admin/rooms" && req.method === "GET") {
@@ -2678,6 +2778,10 @@ const server = Bun.serve({
 
       const userToken = getUserTokenFromRequest(req);
       if (userToken) {
+        const user = await oidc.validateUserSessionToken(userToken);
+        if (user) {
+          oidc.revokeUserOidcTokens(user.id).catch(e => console.error('[OIDC] Token revocation error:', e));
+        }
         await auth.logout(userToken);
         if (redis.isRedisConnected()) await redis.deleteSessionToken(userToken);
       }
@@ -2749,7 +2853,7 @@ const server = Bun.serve({
           });
         }
         return Response.json({ success: true, userId: result.userId }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[Register]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/auth/login" && req.method === "POST") {
@@ -2771,7 +2875,7 @@ const server = Bun.serve({
           headers: { ...corsHeaders, "Content-Type": "application/json",
             "Set-Cookie": oidc.getSessionCookie("user_token", result.sessionToken!) }
         });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[Login]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/auth/me" && req.method === "GET") {
@@ -2794,6 +2898,10 @@ const server = Bun.serve({
     if (path === "/api/auth/logout" && req.method === "POST") {
       const token = getUserTokenFromRequest(req);
       if (token) {
+        const user = await oidc.validateUserSessionToken(token);
+        if (user) {
+          oidc.revokeUserOidcTokens(user.id).catch(e => console.error('[OIDC] Token revocation error:', e));
+        }
         await auth.logout(token);
         if (redis.isRedisConnected()) await redis.deleteSessionToken(token);
       }
@@ -2816,7 +2924,7 @@ const server = Bun.serve({
       const redirectParam = url.searchParams.get("redirect");
       const validatedRedirect = oidc.validateRedirectUrl(redirectParam, baseUrl);
 
-      const result = await oidc.generateAuthorizationUrl(providerId, baseUrl);
+      const result = await oidc.generateAuthorizationUrl(providerId, baseUrl, undefined, validatedRedirect);
       if (!result) {
         return Response.redirect(new URL("/?auth_error=provider_unavailable", req.url).toString(), 302);
       }
@@ -2871,16 +2979,24 @@ const server = Bun.serve({
         return Response.redirect(new URL("/?auth_error=missing_params", req.url).toString(), 302);
       }
 
-      const result = await oidc.processOidcCallback(providerId, code, state, clientIP, req.headers.get("user-agent") || "");
+      const currentUserToken = getUserTokenFromRequest(req);
+      const result = await oidc.processOidcCallback(providerId, code, state, clientIP, req.headers.get("user-agent") || "", currentUserToken);
 
       if (!result.success) {
         return Response.redirect(new URL(`/?auth_error=${encodeURIComponent(result.error || "unknown")}`, req.url).toString(), 302);
       }
 
+      let redirectTo = "/";
+      if (result.isNewUser) {
+        redirectTo = "/?welcome=true";
+      } else if (result.postLoginRedirect && result.postLoginRedirect !== "/") {
+        redirectTo = result.postLoginRedirect;
+      }
+
       return new Response(null, {
         status: 302,
         headers: {
-          "Location": result.isNewUser ? "/?welcome=true" : "/",
+          "Location": redirectTo,
           "Set-Cookie": oidc.getSessionCookie("user_token", result.sessionToken!),
           "X-Content-Type-Options": "nosniff",
           "Cache-Control": "no-store"
@@ -2925,7 +3041,7 @@ const server = Bun.serve({
         const baseUrl = new URL(req.url).origin;
         await auth.requestPasswordReset(body.email, baseUrl);
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/auth/reset-password" && req.method === "GET") {
@@ -2943,12 +3059,16 @@ const server = Bun.serve({
       }
       try {
         const body = await req.json();
+        const csrfToken = body.csrfToken || req.headers.get("x-csrf-token");
+        if (!oidc.validateCsrfToken(csrfToken)) {
+          return Response.json({ error: "Invalid security token. Please refresh and try again." }, { status: 403, headers: corsHeaders });
+        }
         const result = await auth.resetPassword(body.token, body.password);
         if (!result.success) {
           return Response.json({ error: result.error }, { status: 400, headers: corsHeaders });
         }
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/auth/magic-link" && req.method === "POST") {
@@ -2964,7 +3084,7 @@ const server = Bun.serve({
         const baseUrl = new URL(req.url).origin;
         await auth.requestMagicLink(body.email, baseUrl);
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/auth/magic-link" && req.method === "GET") {
@@ -3011,7 +3131,7 @@ const server = Bun.serve({
           return Response.json({ error: result.error }, { status: 400, headers: corsHeaders });
         }
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/auth/change-password" && req.method === "POST") {
@@ -3034,7 +3154,7 @@ const server = Bun.serve({
           return Response.json({ error: result.error }, { status: 400, headers: corsHeaders });
         }
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/auth/sessions" && req.method === "GET") {
@@ -3128,7 +3248,7 @@ const server = Bun.serve({
         }
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "user_created", actor: adminUser.id, actorIp: getClientIP(req), targetType: "user", targetId: result.userId });
         return Response.json({ success: true, userId: result.userId }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/users\/[\w-]+$/) && req.method === "PUT") {
@@ -3145,7 +3265,7 @@ const server = Bun.serve({
         }
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "user_updated", actor: adminUser.id, actorIp: getClientIP(req), targetType: "user", targetId: userId, details: body });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/users\/[\w-]+\/reset-password$/) && req.method === "POST") {
@@ -3166,7 +3286,7 @@ const server = Bun.serve({
         await auth.requestPasswordReset(user.email, baseUrl);
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "user_password_reset_sent", actor: adminUser.id, actorIp: getClientIP(req), targetType: "user", targetId: userId });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Failed to send reset email" }, { status: 500, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Failed to send reset email" }, { status: 500, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/users\/[\w-]+\/set-password$/) && req.method === "POST") {
@@ -3186,7 +3306,7 @@ const server = Bun.serve({
         }
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "user_password_set", actor: adminUser.id, actorIp: getClientIP(req), targetType: "user", targetId: userId });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/users\/[\w-]+$/) && req.method === "DELETE") {
@@ -3222,7 +3342,7 @@ const server = Bun.serve({
         oidc.saveAuthSettings(body);
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "auth_settings_changed", actor: adminUser.id, actorIp: getClientIP(req), details: body });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
 
@@ -3273,7 +3393,7 @@ const server = Bun.serve({
         db.createOidcProvider(provider);
         db.addAuditLog({ timestamp: now, action: "oidc_provider_created", actor: adminUser.id, actorIp: getClientIP(req), targetType: "oidc_provider", targetId: provider.id, details: { name: provider.name } });
         return Response.json({ success: true, id: provider.id }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/oidc-providers\/[\w-]+$/) && req.method === "PUT") {
@@ -3309,7 +3429,7 @@ const server = Bun.serve({
         db.updateOidcProvider(updated);
         db.addAuditLog({ timestamp: now, action: "oidc_provider_updated", actor: adminUser.id, actorIp: getClientIP(req), targetType: "oidc_provider", targetId: providerId });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/oidc-providers\/[\w-]+$/) && req.method === "DELETE") {
@@ -3371,7 +3491,7 @@ const server = Bun.serve({
         db.createSmtpConfig(config);
         db.addAuditLog({ timestamp: now, action: "smtp_config_created", actor: adminUser.id, actorIp: getClientIP(req), targetType: "smtp_config", targetId: config.id, details: { name: config.name } });
         return Response.json({ success: true, id: config.id }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/smtp-configs\/[\w-]+$/) && req.method === "PUT") {
@@ -3405,7 +3525,7 @@ const server = Bun.serve({
         db.updateSmtpConfig(updated);
         db.addAuditLog({ timestamp: now, action: "smtp_config_updated", actor: adminUser.id, actorIp: getClientIP(req), targetType: "smtp_config", targetId: configId });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/admin/smtp-configs/test" && req.method === "POST") {
@@ -3522,7 +3642,7 @@ const server = Bun.serve({
         };
         db.updateEmailTemplate(updated);
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if ((ENV_ADMIN_PASSWORD || isInstanceLocked()) && isAdminRoute(path)) {
@@ -3549,7 +3669,7 @@ const server = Bun.serve({
         const body = await req.json();
         let valid = false;
         if (ENV_ADMIN_PASSWORD) {
-          valid = body.password === ENV_ADMIN_PASSWORD;
+          valid = await verifyAdminPassword(body.password);
         } else {
           valid = await verifyInstancePassword(body.password);
         }
@@ -3562,7 +3682,7 @@ const server = Bun.serve({
           });
         }
         return Response.json({ error: "Invalid password" }, { status: 403, headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/admin/settings" && req.method === "GET") {
@@ -3651,6 +3771,9 @@ const server = Bun.serve({
           instanceSettings.webhookEnabled = body.webhookEnabled;
         }
         if (body.webhookUrl !== undefined) {
+          if (body.webhookUrl && !isValidWebhookUrl(body.webhookUrl)) {
+            return Response.json({ error: "Invalid webhook URL: must be http(s) and not point to private/internal addresses" }, { status: 400, headers: corsHeaders });
+          }
           instanceSettings.webhookUrl = body.webhookUrl || null;
         }
         if (typeof body.backupEnabled === "boolean") {
@@ -3693,7 +3816,7 @@ const server = Bun.serve({
         saveSettings(instanceSettings);
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "settings_changed", actor: adminUser.id, actorIp: getClientIP(req), details: body });
         return Response.json({ success: true }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path === "/api/admin/update" && req.method === "POST") {
@@ -3718,6 +3841,9 @@ const server = Bun.serve({
         const file = formData.get("file") as File | null;
         if (!file) {
           return Response.json({ error: "No file provided" }, { status: 400, headers: corsHeaders });
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          return Response.json({ error: "File too large. Maximum size is 50MB." }, { status: 400, headers: corsHeaders });
         }
         const html = await file.text();
         const validationResult = validateTheOneFileHtml(html);
@@ -3756,8 +3882,8 @@ const server = Bun.serve({
           return Response.json({ success: true, mode: "local" }, { headers: corsHeaders });
         }
         return Response.json({ error: "Invalid mode" }, { status: 400, headers: corsHeaders });
-      } catch {
-        return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders });
+      } catch (e: any) {
+        console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders });
       }
     }
 
@@ -3895,7 +4021,7 @@ const server = Bun.serve({
         db.createApiKey({ id, name: body.name, keyHash, permissions, createdAt: new Date().toISOString(), expiresAt, active: true });
         db.addAuditLog({ timestamp: new Date().toISOString(), action: "api_key_created", actor: adminUser.id, actorIp: getClientIP(req), targetType: "api_key", targetId: id, details: { name: body.name } });
         return Response.json({ id, key: rawKey, name: body.name, permissions, expiresAt }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
 
     if (path.match(/^\/api\/admin\/api-keys\/[\w-]+$/) && req.method === "DELETE") {
@@ -3921,6 +4047,10 @@ const server = Bun.serve({
       const exportData = { version: 1, exportedAt: new Date().toISOString(), rooms, settings };
       db.addAuditLog({ timestamp: new Date().toISOString(), action: "data_exported", actor: adminUser.id, actorIp: getClientIP(req), details: { roomCount: rooms.length } });
       return new Response(JSON.stringify(exportData, null, 2), { headers: { "Content-Type": "application/json", "Content-Disposition": `attachment; filename="theonefile_export_${new Date().toISOString().slice(0, 10)}.json"`, ...securityHeaders } });
+    }
+
+    if (path === "/api/version" && req.method === "GET") {
+      return Response.json({ version: APP_VERSION }, { headers: corsHeaders });
     }
 
     if (path === "/api/theme" && req.method === "GET") {
@@ -3992,7 +4122,7 @@ const server = Bun.serve({
         if (room.destruct.mode === "time") scheduleDestruction(id, room.destruct.value);
         sendWebhook("room_created", { roomId: id, hasPassword: !!room.passwordHash, destructMode, creatorId });
         return Response.json({ id, url: `/s/${id}`, hasPassword: !!room.passwordHash, allowGuests: room.allowGuests }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
     
     if (path.match(/^\/api\/room\/[\w-]+\/verify$/) && req.method === "POST") {
@@ -4010,7 +4140,7 @@ const server = Bun.serve({
       try {
         const body = await req.json();
         return Response.json({ valid: await verifyPassword(body.password || "", room.passwordHash) }, { headers: corsHeaders });
-      } catch { return Response.json({ valid: false }, { headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ valid: false }, { headers: corsHeaders }); }
     }
     
     if (path.match(/^\/api\/room\/[\w-]+$/) && req.method === "DELETE") {
@@ -4027,7 +4157,7 @@ const server = Bun.serve({
           return Response.json({ deleted: true }, { headers: corsHeaders });
         }
         return Response.json({ error: "Only room creator can delete" }, { status: 403, headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
     
     if (path.match(/^\/api\/room\/[\w-]+\/exists$/) && req.method === "GET") {
@@ -4066,7 +4196,7 @@ const server = Bun.serve({
         const wsToken = await generateWsSessionToken(id, collabUserId);
 
         return Response.json({ wsToken, expiresIn: WS_TOKEN_EXPIRY / 1000 }, { headers: corsHeaders });
-      } catch { return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
+      } catch (e: any) { console.error("[API]", e.message); return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders }); }
     }
     
     if (path === "/api/refresh" && req.method === "POST") {
@@ -4330,10 +4460,10 @@ ${saveHookScript}
   },
   websocket: {
     open(ws) {
-      const roomId = (ws.data as any)?.roomId;
+      const roomId = (ws.data as WsData)?.roomId;
       if (!roomId) return;
       const connectionId = crypto.randomUUID();
-      (ws.data as any).connectionId = connectionId;
+      (ws.data as WsData).connectionId = connectionId;
       if (!roomConnections.has(roomId)) roomConnections.set(roomId, new Set());
       roomConnections.get(roomId)!.add(ws);
       if (!roomUsers.has(roomId)) roomUsers.set(roomId, new Map());
@@ -4344,13 +4474,13 @@ ${saveHookScript}
       roomMeta.set(roomId, meta);
     },
     message(ws, message) {
-      const roomId = (ws.data as any)?.roomId;
-      const connectionId = (ws.data as any)?.connectionId;
+      const roomId = (ws.data as WsData)?.roomId;
+      const connectionId = (ws.data as WsData)?.connectionId;
       if (!roomId || !connectionId) return;
       let msg;
       try { msg = JSON.parse(message.toString()); } catch { return; }
 
-      const validTypes = ['join', 'leave', 'presence', 'state', 'patch', 'chat', 'cursor'];
+      const validTypes = ['join', 'leave', 'presence', 'state', 'patch', 'chat', 'cursor', 'typing'];
       if (!msg.type || !validTypes.includes(msg.type)) return;
 
       if (!checkWsRateLimit(connectionId, msg.type)) {
@@ -4365,14 +4495,18 @@ ${saveHookScript}
       if (msg.type === 'chat') {
         if (!msg.text || typeof msg.text !== 'string') return;
         if (msg.text.length > 500) msg.text = msg.text.substring(0, 500);
-        msg.text = msg.text.replace(/[<>]/g, '');
+        msg.text = msg.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        if (!roomChatHistory.has(roomId)) roomChatHistory.set(roomId, []);
+        const history = roomChatHistory.get(roomId)!;
+        history.push({ ...msg, timestamp: Date.now() });
+        if (history.length > 100) history.splice(0, history.length - 100);
       }
 
       if (msg.type === 'join' && msg.user) {
         let userId = msg.user.id;
         if (!userId || !isValidUUID(userId)) return;
 
-        const verifiedUserId = (ws.data as any)?.verifiedUserId;
+        const verifiedUserId = (ws.data as WsData)?.verifiedUserId;
         if (verifiedUserId) {
           if (userId !== verifiedUserId) {
             ws.send(JSON.stringify({ type: 'error', error: 'User ID mismatch with session token' }));
@@ -4382,7 +4516,7 @@ ${saveHookScript}
 
         let rawName = msg.user.name;
         if (rawName && typeof rawName === 'string') {
-          rawName = rawName.substring(0, 30).replace(/[<>]/g, '').trim();
+          rawName = rawName.substring(0, 30).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').trim();
           msg.user.name = rawName;
         }
         const userName = rawName?.toLowerCase().trim();
@@ -4407,7 +4541,7 @@ ${saveHookScript}
           usedNames.set(userName, userId);
         }
 
-        (ws.data as any).userId = userId;
+        (ws.data as WsData).userId = userId;
         users.delete(userId);
         users.set(userId, msg.user);
         const existingUsers = Array.from(users.values()).filter(u => u.id !== userId);
@@ -4419,6 +4553,10 @@ ${saveHookScript}
             ws.send(JSON.stringify({ type: 'initial-state', state: room.topology }));
           } else {
             ws.send(JSON.stringify({ type: 'initial-state', state: null }));
+          }
+          const chatHistory = roomChatHistory.get(roomId);
+          if (chatHistory && chatHistory.length > 0) {
+            ws.send(JSON.stringify({ type: 'chat-history', messages: chatHistory }));
           }
           db.addActivityLog({ timestamp: new Date().toISOString(), roomId, userId, userName: rawName, eventType: "join" });
           if (redis.isRedisConnected()) {
@@ -4457,8 +4595,8 @@ ${saveHookScript}
       resetDestructionTimer(roomId);
     },
     close(ws) {
-      const roomId = (ws.data as any)?.roomId;
-      const userId = (ws.data as any)?.userId;
+      const roomId = (ws.data as WsData)?.roomId;
+      const userId = (ws.data as WsData)?.userId;
       if (!roomId) return;
       const connections = roomConnections.get(roomId);
       if (connections) {
@@ -4523,12 +4661,12 @@ for (const admin of adminUsers) {
   }
 }
 
-console.log(`TheOneFile Collab running on http://localhost:${PORT}`);
+console.log(`TheOneFile Verse v${APP_VERSION} | http://localhost:${PORT}`);
 if (ENV_ADMIN_PASSWORD) console.log(`Instance password lock: ENV`);
 else if (isInstanceLocked()) console.log(`Instance password lock: Settings`);
-if (instanceSettings.skipUpdates) console.log(`Auto-updates: Disabled`);
-else if (instanceSettings.updateIntervalHours > 0) console.log(`Auto-updates: Every ${instanceSettings.updateIntervalHours}h`);
-if (instanceSettings.backupEnabled) console.log(`Auto-backups: Every ${instanceSettings.backupIntervalHours}h, keep ${instanceSettings.backupRetentionCount}`);
+if (instanceSettings.skipUpdates) console.log(`Auto updates: Disabled`);
+else if (instanceSettings.updateIntervalHours > 0) console.log(`Auto updates: Every ${instanceSettings.updateIntervalHours}h`);
+if (instanceSettings.backupEnabled) console.log(`Auto backups: Every ${instanceSettings.backupIntervalHours}h, keep ${instanceSettings.backupRetentionCount}`);
 console.log(`Admin: ${isAdminConfigured() ? 'Configured' : 'Not set up'} | Rooms: ${db.countRooms()}`);
 
 const allRooms = db.listRooms();

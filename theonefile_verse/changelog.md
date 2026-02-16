@@ -1,5 +1,81 @@
 ### TheOneFile_Verse changelog
 
+**2/15/26 Theonefile_verse 1.6.0** *Security hardening, chat overhaul, UX improvements*
+* **Security Hardening**
+  * Timing safe comparison for legacy password hashes using crypto.timingSafeEqual
+  * Length padded admin password comparison to prevent length oracle attacks
+  * Full HTML entity escaping on chat messages and usernames (& < > " ')
+  * Content Security Policy headers applied to all pages
+  * OIDC provider name/type XSS protection with esc() in admin panel
+  * PUT method added to CORS allowed methods
+  * 50MB file upload size limit enforced before processing
+  * Generic error messages on registration and disabled accounts to prevent user enumeration
+  * CRLF injection prevention in all email headers (from, to, subject)
+  * STARTTLS downgrade now throws error instead of continuing in plaintext
+  * Template subject variable CRLF sanitization
+
+* **Chat System Overhaul**
+  * Chat message persistence sffrf
+  * Typing indicators with "user is typing" display
+  * Message replies with quoted reference
+  * @mention highlighting with notification sound
+  * 500 character counter with visual warning
+  * Emoji picker with most common emojis
+  * Relative timestamps (2m ago, 1h ago)
+
+* **UX Improvements**
+  * iOS safe area inset support on collab bar, modals, toasts
+  * User avatars with colored initials in user list
+  * Connection status indicator (green/yellow/red dot with pulse)
+  * Offline/reconnecting banner with manual reconnect button
+  * Stacking notification toasts with slide animations
+  * Full screen mobile chat at 640px breakpoint
+  * Smooth CSS transitions on remote cursors
+  * Room expiry countdown display for auto destruct rooms
+
+* **Server**
+  * Typing message type with dedicated rate limit (5 bucket, 1/sec refill)
+  * Chat history cleanup on room deletion
+
+**2/14/26 Theonefile_verse 1.5.2** *Auth flow fixes, error logging, version tracking*
+* **Auth Flow Fixes**
+  * Fixed setup page JavaScript SyntaxError that prevented form submission
+  * Fixed missing SetCookie header on /api/setup route
+  * Fixed password reset form variable shadowing window.confirm
+  * Added defensive semicolons to OIDC button rendering across all forms
+* **Error Logging**
+  * All server side catch blocks now log errors with tagged prefixes
+  * Tags: [Setup], [Login], [Register], [AdminLogin], [API], [Backup], [Update], etc.
+* **Infrastructure**
+  * Docker entrypoint now handles volume permissions automatically via su exec
+  * Database migrations use safe column existence check before ALTER TABLE (BUN FIX)
+  * Added /api/version endpoint for build verification
+  * Version displayed in startup logs
+  * CSRF cookie now includes HttpOnly flag
+
+**2/14/26 Theonefile_verse 1.5.1** *Fixes and further security hardening*
+* **OIDC/SSO**
+  * JWT signature verification now correctly maps hash algorithms (SHA 256/384/512) per token header
+  * Discovery document validation ensures authorization and token endpoints exist and issuer matches
+  * Sub claim enforcement on all ID tokens per OIDC spec
+  * Openid scope automatically enforced on all provider configurations
+  * Token type validation on token exchange responses
+  * Post login redirect persistence across SSO flows
+  * Account linking reverification ensures session is still valid before linking
+  * Increased entropy in random string generation for required values
+
+* **Security Hardening**
+  * Added CSRF token protection on password reset endpoint
+  * Constant time token comparison using crypto.timingSafeEqual
+  * SSRF protection on webhook URLs (blocks private/internal IP ranges)
+  * WebSocket connection rate limiting per IP address
+  * IP validation on all rate limited endpoints
+  * Automatic admin token cleanup on startup
+  * Rate limit store memory management improvements
+  * Token revocation on session termination
+  * Docker Redis password security via --requirepass
+  * Dockerfile now uses non root USER directive
+
 **1/26/26 Theonefile_verse 1.5.0** *The Identity Update* 
 * **Full User Account System**
   * User registration with email verification
