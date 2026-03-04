@@ -2,6 +2,19 @@
   'use strict';
   var pageData = JSON.parse((document.getElementById('page-data') || {}).textContent || '{}');
   var ADMIN_PATH = pageData.adminPath || 'admin';
+  var csrfToken = '';
+  function refreshCsrf() {
+    return fetch('/api/auth/csrf').then(function(r) { return r.json(); }).then(function(d) {
+      if (d.token) csrfToken = d.token;
+    }).catch(function() {});
+  }
+  refreshCsrf();
+  function csrfHeaders(extra) {
+    var h = { 'x-csrf-token': csrfToken };
+    if (extra) { for (var k in extra) { if (extra.hasOwnProperty(k)) h[k] = extra[k]; } }
+    setTimeout(refreshCsrf, 0);
+    return h;
+  }
   var forcedTheme = null;
 
   function getTheme() {
@@ -230,7 +243,7 @@
     try {
       var res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ adminPath: newPath })
       });
       var data = await res.json();
@@ -253,7 +266,7 @@
     var windowVal = parseInt(document.getElementById('rate-limit-window').value) || 60;
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ rateLimitMaxAttempts: attempts, rateLimitWindow: windowVal })
     });
     showStatus('Rate limit settings saved', 'success');
@@ -263,7 +276,7 @@
     var val = document.getElementById('forced-theme').value;
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ forcedTheme: val })
     });
     showStatus('Theme setting saved', 'success');
@@ -275,7 +288,7 @@
     renderSettings();
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ [key]: settings[key] })
     });
     showStatus('Setting updated', 'success');
@@ -289,7 +302,7 @@
     }
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ instancePassword: pwd })
     });
     document.getElementById('instance-password').value = '';
@@ -301,7 +314,7 @@
     var val = parseInt(document.getElementById('update-interval').value) || 0;
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ updateIntervalHours: val })
     });
     showStatus('Update interval saved', 'success');
@@ -312,7 +325,7 @@
     btn.disabled = true;
     btn.textContent = 'Updating...';
     try {
-      var res = await fetch('/api/admin/update', { method: 'POST' });
+      var res = await fetch('/api/admin/update', { method: 'POST', headers: csrfHeaders() });
       var data = await res.json();
       if (data.success) {
         var msg = 'Updated to v' + (data.version || '?') + ' (' + Math.round(data.size / 1024) + 'KB)';
@@ -360,7 +373,7 @@
     try {
       var res = await fetch('/api/admin/source-mode', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ mode: mode })
       });
       var data = await res.json();
@@ -382,7 +395,7 @@
     var formData = new FormData();
     formData.append('file', file);
     try {
-      var res = await fetch('/api/admin/upload-html', { method: 'POST', body: formData });
+      var res = await fetch('/api/admin/upload-html', { method: 'POST', headers: csrfHeaders(), body: formData });
       var data = await res.json();
       if (data.success) {
         showStatus('Uploaded successfully (' + Math.round(data.size / 1024) + 'KB), ' + data.edition + ' edition', 'success');
@@ -442,7 +455,7 @@
   async function saveRoomDefaults() {
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         defaultDestructMode: document.getElementById('default-destruct-mode').value,
         defaultDestructHours: parseInt(document.getElementById('default-destruct-hours').value) || 24,
@@ -562,7 +575,7 @@
     if (!confirm('Delete ' + selected.size + ' room(s) permanently?')) return;
     for (var id of selected) {
       try {
-        await fetch('/api/admin/rooms/' + id, { method: 'DELETE' });
+        await fetch('/api/admin/rooms/' + id, { method: 'DELETE', headers: csrfHeaders() });
       } catch (e) {
       }
     }
@@ -620,7 +633,7 @@
   async function deleteRoom(id) {
     if (!confirm('Delete this room permanently?')) return;
     try {
-      var res = await fetch('/api/admin/rooms/' + id, { method: 'DELETE' });
+      var res = await fetch('/api/admin/rooms/' + id, { method: 'DELETE', headers: csrfHeaders() });
       if (res.ok) {
         selected.delete(id);
         loadData();
@@ -633,7 +646,7 @@
   }
 
   async function logout() {
-    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    await fetch('/api/logout', { method: 'POST', credentials: 'include', headers: csrfHeaders() });
     window.location.href = '/';
   }
 
@@ -648,7 +661,7 @@
     var url = document.getElementById('webhook-url').value;
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ webhookUrl: url })
     });
     showStatus('Webhook URL saved', 'success');
@@ -659,7 +672,7 @@
     var retention = parseInt(document.getElementById('backup-retention').value) || 7;
     await fetch('/api/admin/settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ backupIntervalHours: interval, backupRetentionCount: retention })
     });
     showStatus('Backup settings saved', 'success');
@@ -760,7 +773,7 @@
 
   async function createBackup() {
     try {
-      var res = await fetch('/api/admin/backups', { method: 'POST' });
+      var res = await fetch('/api/admin/backups', { method: 'POST', headers: csrfHeaders() });
       var data = await res.json();
       if (data.success) {
         showStatus('Backup created', 'success');
@@ -780,7 +793,7 @@
   async function restoreBackup(id) {
     if (!confirm('Restore this backup? This will add missing rooms.')) return;
     try {
-      var res = await fetch('/api/admin/backups/' + id + '/restore', { method: 'POST' });
+      var res = await fetch('/api/admin/backups/' + id + '/restore', { method: 'POST', headers: csrfHeaders() });
       var data = await res.json();
       if (data.success) {
         showStatus('Restored ' + data.roomsRestored + ' rooms', 'success');
@@ -796,7 +809,7 @@
   async function deleteBackup(id) {
     if (!confirm('Delete this backup?')) return;
     try {
-      await fetch('/api/admin/backups/' + id, { method: 'DELETE' });
+      await fetch('/api/admin/backups/' + id, { method: 'DELETE', headers: csrfHeaders() });
       loadBackups();
     } catch (e) {
     }
@@ -860,7 +873,7 @@
     try {
       var res = await fetch('/api/admin/api-keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ name: name, permissions: perms, expiresInDays: expires || null })
       });
       var data = await res.json();
@@ -880,7 +893,7 @@
   async function revokeApiKey(id) {
     if (!confirm('Revoke this API key?')) return;
     try {
-      await fetch('/api/admin/api-keys/' + id, { method: 'DELETE' });
+      await fetch('/api/admin/api-keys/' + id, { method: 'DELETE', headers: csrfHeaders() });
       loadApiKeys();
     } catch (e) {
     }
@@ -966,7 +979,7 @@
     try {
       var res = await fetch('/api/admin/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ email: email, displayName: displayName, password: password, role: role })
       });
       var data = await res.json();
@@ -985,7 +998,7 @@
   async function deleteUser(id) {
     if (!confirm('Delete this user permanently?')) return;
     try {
-      await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+      await fetch('/api/admin/users/' + id, { method: 'DELETE', headers: csrfHeaders() });
       loadUsers();
     } catch (e) {
       showAuthStatus('Error deleting user', 'error');
@@ -1022,7 +1035,7 @@
     try {
       var res = await fetch('/api/admin/users/' + id, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data)
       });
       var result = await res.json();
@@ -1043,7 +1056,7 @@
     var email = document.getElementById('edit-user-email').value;
     if (!confirm('Send password reset email to ' + email + '?')) return;
     try {
-      var res = await fetch('/api/admin/users/' + id + '/reset-password', { method: 'POST' });
+      var res = await fetch('/api/admin/users/' + id + '/reset-password', { method: 'POST', headers: csrfHeaders() });
       var result = await res.json();
       if (result.success) {
         showAuthStatus('Password reset email sent!', 'success');
@@ -1091,7 +1104,7 @@
     var mode = document.getElementById('auth-mode').value;
     await fetch('/api/admin/auth-settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ authMode: mode })
     });
     showAuthStatus('Auth mode saved', 'success');
@@ -1102,7 +1115,7 @@
     renderAuthSettings();
     await fetch('/api/admin/auth-settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ [key]: authSettings[key] })
     });
     showAuthStatus('Setting updated', 'success');
@@ -1114,7 +1127,7 @@
     authSettings[key] = num;
     await fetch('/api/admin/auth-settings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ [key]: num })
     });
     showAuthStatus('Setting updated', 'success');
@@ -1215,7 +1228,7 @@
       var method = id ? 'PUT' : 'POST';
       var res = await fetch(url, {
         method: method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data)
       });
       var result = await res.json();
@@ -1234,7 +1247,7 @@
   async function deleteOidcProvider(id) {
     if (!confirm('Delete this OIDC provider?')) return;
     try {
-      await fetch('/api/admin/oidc-providers/' + id, { method: 'DELETE' });
+      await fetch('/api/admin/oidc-providers/' + id, { method: 'DELETE', headers: csrfHeaders() });
       loadOidcProviders();
     } catch (e) {
     }
@@ -1342,7 +1355,7 @@
       var method = id ? 'PUT' : 'POST';
       var res = await fetch(url, {
         method: method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data)
       });
       var result = await res.json();
@@ -1372,7 +1385,7 @@
     try {
       var res = await fetch('/api/admin/smtp-configs/test', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data)
       });
       var result = await res.json();
@@ -1389,7 +1402,7 @@
   async function deleteSmtpConfig(id) {
     if (!confirm('Delete this SMTP configuration?')) return;
     try {
-      await fetch('/api/admin/smtp-configs/' + id, { method: 'DELETE' });
+      await fetch('/api/admin/smtp-configs/' + id, { method: 'DELETE', headers: csrfHeaders() });
       loadSmtpConfigs();
     } catch (e) {
     }
@@ -1554,7 +1567,7 @@
     try {
       var res = await fetch('/api/admin/email-templates/' + id, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(data)
       });
       var result = await res.json();
@@ -1634,7 +1647,7 @@
   async function clearEmailLogs() {
     if (!confirm('Clear all email logs? This cannot be undone.')) return;
     try {
-      var res = await fetch('/api/admin/email-logs', { method: 'DELETE' });
+      var res = await fetch('/api/admin/email-logs', { method: 'DELETE', headers: csrfHeaders() });
       if (res.ok) {
         loadEmailLogs();
         showAuthStatus('Email logs cleared', 'success');
@@ -1646,7 +1659,7 @@
   async function clearActivityLogs() {
     if (!confirm('Clear all activity logs? This cannot be undone.')) return;
     try {
-      var res = await fetch('/api/admin/activity-logs', { method: 'DELETE' });
+      var res = await fetch('/api/admin/activity-logs', { method: 'DELETE', headers: csrfHeaders() });
       if (res.ok) {
         loadActivityLogs();
         showAuthStatus('Activity logs cleared', 'success');
@@ -1658,7 +1671,7 @@
   async function clearAuditLogs() {
     if (!confirm('Clear all audit logs? This cannot be undone.')) return;
     try {
-      var res = await fetch('/api/admin/audit-logs', { method: 'DELETE' });
+      var res = await fetch('/api/admin/audit-logs', { method: 'DELETE', headers: csrfHeaders() });
       if (res.ok) {
         loadAuditLogs();
         showAuthStatus('Audit logs cleared', 'success');
