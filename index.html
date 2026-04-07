@@ -1,746 +1,1653 @@
-<!doctype html>
-<html lang="en" data-theme="dark">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>The One File</title>
-  <meta name="description" content="One HTML file that you can open anywhere to view and edit your network diagrams, from air gapped documentation to live status monitoring and custom icons for both corporate and home lab topologies, working offline by default and online when it helps.">
-  <meta name="keywords" content="single file network topology editor, offline network diagram tool, self contained network diagram, html network diagram editor, portable network topology tool, offline network documentation, air gapped network diagram, network topology single html file, editable network diagram offline, view and edit network diagrams in browser, offline first network topology, encrypted network documentation, aes 256 encrypted network diagrams, browser based network diagram editor, zero dependency network diagram tool, no server network documentation, homelab network diagram, enterprise network topology documentation, rack diagram offline, vlan network diagram, subnet planning diagram, break glass network documentation, disaster recovery network documentation, air gapped infrastructure documentation, offline encrypted documentation, browser native encryption tool, web crypto api aes gcm, secure network topology editor, no cloud network documentation, client side encrypted diagrams, editable html diagram, network diagram with custom icons, live network status monitoring diagram, ping monitoring network map, responsive network diagram editor, mobile network diagram tool">
-  <meta name="author" content="GelatineScreams">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
-
-  <style>
-    @property --rotate {
-      syntax: "<angle>";
-      initial-value: 0deg;
-      inherits: false;
-    }
-
-    @property --lightning-opacity {
-      syntax: "<number>";
-      initial-value: 0;
-      inherits: false;
-    }
-
-    :root {
-      --transition: 0.4s ease;
-    }
-
-    :root[data-theme="dark"] {
-      --bg: #08090c;
-      --bg-card: #0f1019;
-      --bg-card-end: #0a0b0f;
-      --bg-content: rgba(8, 9, 15, 0.8);
-      --text: #f0f1f3;
-      --text-secondary: #c8ccd4;
-      --text-muted: #6b7a8c;
-      --accent: #5ddcff;
-      --accent-secondary: #7dd3fc;
-      --accent-tertiary: #93c5fd;
-      --accent-glow: rgba(93, 220, 255, 0.5);
-      --accent-subtle: rgba(93, 220, 255, 0.1);
-      --border: rgba(93, 220, 255, 0.15);
-      --border-subtle: rgba(93, 220, 255, 0.1);
-      --code-bg: rgba(93, 220, 255, 0.1);
-      --table-header: rgba(93, 220, 255, 0.08);
-      --table-alt: rgba(93, 220, 255, 0.03);
-      --gradient-1: rgba(76, 0, 194, 0.15);
-      --gradient-2: rgba(56, 189, 248, 0.1);
-      --gradient-3: rgba(60, 103, 227, 0.05);
-      --glow-intensity: 0.6;
-      --particle-opacity: 0.7;
-      --flash-intensity: 0.3;
-	  --flash-color: rgba(93, 220, 255, var(--lightning-opacity));
-    }
-
-    :root[data-theme="light"] {
-      --bg: #f0f4f8;
-      --bg-card: #ffffff;
-      --bg-card-end: #f8fafc;
-      --bg-content: rgba(255, 255, 255, 0.9);
-      --text: #0f172a;
-      --text-secondary: #334155;
-      --text-muted: #64748b;
-      --accent: #0284c7;
-      --accent-secondary: #0369a1;
-      --accent-tertiary: #075985;
-      --accent-glow: rgba(2, 132, 199, 0.4);
-      --accent-subtle: rgba(2, 132, 199, 0.08);
-      --border: rgba(2, 132, 199, 0.2);
-      --border-subtle: rgba(2, 132, 199, 0.1);
-      --code-bg: rgba(2, 132, 199, 0.08);
-      --table-header: rgba(2, 132, 199, 0.08);
-      --table-alt: rgba(2, 132, 199, 0.03);
-      --gradient-1: rgba(76, 0, 194, 0.08);
-      --gradient-2: rgba(56, 189, 248, 0.06);
-      --gradient-3: rgba(60, 103, 227, 0.04);
-      --glow-intensity: 0.35;
-      --particle-opacity: 0.4;
-      --flash-intensity: 0.15;
-	  --flash-color: rgba(2, 100, 180, var(--lightning-opacity));
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      justify-content: center;
-      padding: 2.5rem 1.5rem;
-      overflow-x: hidden;
-      transition: background var(--transition), color var(--transition);
-      font-size: 1rem;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: 
-        radial-gradient(ellipse at 20% 20%, var(--gradient-1) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, var(--gradient-2) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, var(--gradient-3) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-      transition: background var(--transition);
-    }
-
-	body::after {
-	  content: "";
-	  position: fixed;
-	  inset: 0;
-	  background: radial-gradient(ellipse at var(--flash-x, 50%) var(--flash-y, 30%), 
-		var(--flash-color) 0%, 
-		transparent 50%);
-	  pointer-events: none;
-	  z-index: 1;
-	  animation: ambientFlash 8s ease-in-out infinite;
-	}
-
-    @keyframes ambientFlash {
-      0%, 100% { --lightning-opacity: 0; --flash-x: 30%; --flash-y: 20%; }
-      4% { --lightning-opacity: var(--flash-intensity); }
-      5% { --lightning-opacity: 0; }
-      6% { --lightning-opacity: calc(var(--flash-intensity) * 0.5); }
-      7%, 50% { --lightning-opacity: 0; --flash-x: 70%; --flash-y: 60%; }
-      54% { --lightning-opacity: calc(var(--flash-intensity) * 0.83); }
-      55% { --lightning-opacity: 0; }
-      56% { --lightning-opacity: calc(var(--flash-intensity) * 0.33); }
-      57% { --lightning-opacity: 0; }
-    }
-
-    .shell {
-      position: relative;
-      width: 100%;
-      max-width: 900px;
-      padding: 3px;
-      border-radius: 1rem;
-      z-index: 10;
-    }
-
-    .shell::before {
-      content: "";
-      position: absolute;
-      inset: -2px;
-      border-radius: 1rem;
-      background: linear-gradient(
-        var(--rotate),
-        #5ddcff,
-        #3c67e3 25%,
-        #4e00c2 50%,
-        #3c67e3 75%,
-        #5ddcff
-      );
-      z-index: -2;
-      animation: spin 4s linear infinite;
-    }
-
-    .shell::after {
-      content: "";
-      position: absolute;
-      left: 5%;
-      right: 5%;
-      bottom: -10%;
-      border-radius: 1rem;
-      background: linear-gradient(
-        var(--rotate),
-        #5ddcff,
-        #3c67e3 25%,
-        #4e00c2 50%,
-        #3c67e3 75%,
-        #5ddcff
-      );
-      z-index: -3;
-      filter: blur(40px);
-      opacity: var(--glow-intensity);
-      animation: spin 4s linear infinite, pulse 3s ease-in-out infinite;
-      transition: opacity var(--transition);
-    }
-
-    @keyframes spin {
-      to { --rotate: 360deg; }
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: calc(var(--glow-intensity) - 0.1); filter: blur(40px); }
-      50% { opacity: calc(var(--glow-intensity) + 0.2); filter: blur(50px); }
-    }
-
-    .inner {
-      background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-card-end) 100%);
-      border-radius: calc(1rem - 3px);
-      padding: 2rem 2.25rem 2.25rem;
-      position: relative;
-      overflow: hidden;
-      transition: background var(--transition);
-    }
-
-    .inner::before {
-      content: "";
-      position: absolute;
-      width: 200%;
-      height: 200%;
-      top: -50%;
-      left: -50%;
-      background-image: 
-        radial-gradient(2px 2px at 20% 30%, rgba(93, 220, 255, 0.8), transparent),
-        radial-gradient(2px 2px at 40% 70%, rgba(60, 103, 227, 0.6), transparent),
-        radial-gradient(1px 1px at 60% 20%, rgba(78, 0, 194, 0.7), transparent),
-        radial-gradient(2px 2px at 80% 50%, rgba(93, 220, 255, 0.5), transparent),
-        radial-gradient(1px 1px at 10% 80%, rgba(60, 103, 227, 0.6), transparent),
-        radial-gradient(2px 2px at 90% 90%, rgba(93, 220, 255, 0.4), transparent);
-      animation: drift 20s linear infinite;
-      pointer-events: none;
-      opacity: var(--particle-opacity);
-      transition: opacity var(--transition);
-    }
-
-    @keyframes drift {
-      to { transform: translate(10%, 10%); }
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-subtle);
-      position: relative;
-      transition: border-color var(--transition);
-    }
-
-    .title-group {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-	  font-family: 'MedievalSharp';
-    }
-
-    .sword-icon {
-      width: 32px;
-      height: 20px;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 4px var(--accent-glow));
-      transition: filter var(--transition);
-    }
-
-    .sword-icon polygon,
-    .sword-icon rect,
-    .sword-icon ellipse {
-      fill: var(--accent);
-      transition: fill var(--transition);
-    }
-
-    .title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--accent);
-      text-shadow: 
-        0 0 10px var(--accent-glow),
-        0 0 20px rgba(93, 220, 255, 0.3);
-      animation: electricFlicker 4s ease-in-out infinite;
-      transition: color var(--transition), text-shadow var(--transition);
-    }
-
-    .tagline {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      letter-spacing: 0.12em;
-      margin-top: 0.15rem;
-      text-transform: uppercase;
-      transition: color var(--transition);
-    }
-
-    @keyframes electricFlicker {
-      0%, 100% { opacity: 1; }
-      92% { opacity: 1; }
-      93% { opacity: 0.7; }
-      94% { opacity: 1; }
-      95% { opacity: 0.8; }
-      96% { opacity: 1; }
-    }
-
-    .header-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .theme-toggle {
-      font-size: 0.7rem;
-	  font-family: inherit;
-      font-weight: 600;
-      padding: 0.4rem 0.85rem;
-      border-radius: 0.5rem;
-      border: 1px solid var(--border);
-      color: var(--accent);
-      background: var(--accent-subtle);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .theme-toggle:hover {
-      background: var(--accent);
-      color: var(--bg-card);
-      box-shadow: 0 0 20px var(--accent-glow);
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      font-weight: 500;
-      padding: 0.4rem 0.85rem;
-      border-radius: 2rem;
-      border: 1px solid var(--border);
-      color: var(--accent);
-      background: var(--accent-subtle);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all var(--transition);
-    }
-
-    .badge2 {
-      font-size: 0.7rem;
-      font-weight: 500;
-      padding: 0.4rem 0.85rem;
-      color: var(--accent);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all var(--transition);
-    }
-	
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-glow);
-      animation: pulseDot 2s ease-in-out infinite;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent-glow); }
-      50% { box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent-glow); }
-    }
-
-    .markdown-body {
-      border-radius: 0.75rem;
-      border: 1px solid var(--border-subtle);
-      padding: 1.5rem 1.75rem;
-      background: var(--bg-content);
-      overflow-x: auto;
-      line-height: 1.7;
-      font-size: 1.2rem;
-      color: var(--text-secondary);
-      position: relative;
-      transition: all var(--transition);
-    }
-
-    .markdown-body img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 0.5rem;
-      border: 1px solid var(--border);
-      margin: 0.5rem 0;
-      transition: border-color var(--transition);
-    }
-
-    .markdown-body h1,
-    .markdown-body h2,
-    .markdown-body h3,
-    .markdown-body h4,
-    .markdown-body h5,
-    .markdown-body h6 {
-      font-size: 1.5em;
-      line-height: 1.4;
-      margin-top: 2rem;
-      margin-bottom: 0.75rem;
-      color: var(--text);
-      transition: color var(--transition);
-    }
-
-    .markdown-body h1:first-child,
-    .markdown-body h2:first-child,
-    .markdown-body h3:first-child {
-      margin-top: 0;
-    }
-
-    .markdown-body h1 {
-      font-size: 1.6rem;
-      color: var(--accent);
-      text-shadow: 0 0 20px var(--accent-glow);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
-    }
-
-    .markdown-body h2 {
-      font-size: 1.35rem;
-      color: var(--accent-secondary);
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: 0.35rem;
-    }
-
-    .markdown-body h3 { 
-      font-size: 1.1rem; 
-      color: var(--accent-tertiary);
-    }
-
-    .markdown-body p {
-      margin: 0.75rem 0;
-    }
-
-    .markdown-body a {
-      color: var(--accent);
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: all 0.2s ease;
-    }
-
-    .markdown-body a:hover {
-      text-shadow: 0 0 10px var(--accent-glow);
-      border-bottom-color: var(--accent);
-    }
-
-    .markdown-body strong {
-      color: var(--text);
-    }
-
-    .markdown-body code {
-      font-family: "SF Mono", Monaco, Consolas, monospace;
-      font-size: 0.85em;
-      background: var(--code-bg);
-      padding: 0.2rem 0.45rem;
-      border-radius: 0.35rem;
-      border: 1px solid var(--border-subtle);
-      color: var(--accent);
-      transition: all var(--transition);
-    }
-
-    .markdown-body pre {
-      background: var(--code-bg);
-      border-radius: 0.5rem;
-      padding: 1rem 1.25rem;
-      overflow-x: auto;
-      border: 1px solid var(--border-subtle);
-      transition: all var(--transition);
-    }
-
-    .markdown-body pre code {
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: var(--text-secondary);
-    }
-
-    .markdown-body ul,
-    .markdown-body ol {
-      padding-left: 1.5rem;
-      margin: 0.75rem 0;
-    }
-
-    .markdown-body li::marker {
-      color: var(--accent);
-    }
-
-    .markdown-body table {
-      border-collapse: collapse;
-      width: 100%;
-      margin: 1rem 0;
-      font-size: 0.875rem;
-      border: 1px solid var(--border);
-      transition: border-color var(--transition);
-    }
-
-    .markdown-body th,
-    .markdown-body td {
-      border: 1px solid var(--border-subtle);
-      padding: 0.6rem 0.85rem;
-      text-align: left;
-      transition: all var(--transition);
-    }
-
-    .markdown-body th {
-      background: var(--table-header);
-      font-weight: 600;
-      color: var(--accent-secondary);
-    }
-
-    .markdown-body tr:nth-child(even) td {
-      background: var(--table-alt);
-    }
-
-    .status {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border-subtle);
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all var(--transition);
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
-    }
-
-    .status.error .status-dot {
-      background: #f87171;
-      box-shadow: 0 0 10px rgba(248, 113, 113, 0.8);
-    }
-
-    .lightning {
-      position: absolute;
-      pointer-events: none;
-      opacity: 0;
-      filter: drop-shadow(0 0 3px #5ddcff) drop-shadow(0 0 10px rgba(93, 220, 255, 0.8));
-    }
-
-    .lightning path {
-      fill: var(--accent);
-    }
-
-    .lightning-left {
-      left: -30px;
-      top: 20%;
-      animation: strikeBolt 6s ease-in-out infinite;
-    }
-
-    .lightning-right {
-      right: -30px;
-      top: 40%;
-      transform: scaleX(-1);
-      animation: strikeBolt 6s ease-in-out infinite 3s;
-    }
-
-    @keyframes strikeBolt {
-      0%, 100% { opacity: 0; }
-      45% { opacity: 0; }
-      46% { opacity: 1; }
-      48% { opacity: 0.3; }
-      49% { opacity: 1; }
-      52% { opacity: 0; }
-    }
-
-    @media (max-width: 640px) {
-      body {
-        padding: 1.25rem 0.75rem;
-      }
-
-      .inner {
-        padding: 1.5rem 1.25rem;
-      }
-
-      .markdown-body {
-        padding: 1.25rem;
-      }
-
-      header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-      }
-
-      .header-controls {
-        width: 100%;
-        justify-content: space-between;
-      }
-
-      .lightning {
-        display: none;
-      }
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
-<script async defer src="https://buttons.github.io/buttons.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The One File | Single HTML Network Topology Editor</title>
+<meta name="title" content="The One File | Single HTML Network Topology Editor">
+<meta name="description" content="Map networks, smart homes, mind maps, infrastructure or anything with nodes and connections in a single HTML file. Enterprise AES 256 encryption, 10,000+ icons, live monitoring, rack topologies, recording and replay. Works offline, opens anywhere, saves into itself. No install, no dependencies.">
+<meta name="keywords" content="single file network topology editor, offline network diagram tool, self contained network diagram, html network diagram editor, portable network topology tool, offline network documentation, air gapped network diagram, network topology single html file, editable network diagram offline, homelab network diagram, enterprise network topology documentation, rack diagram, vlan network diagram, subnet planning, network map, infrastructure diagram, server rack visualization, network monitoring, live ping status, self hosted network tool, docker network diagram, real time collaboration topology, encrypted network documentation, browser based diagram editor, zero dependency network tool, open source network diagram">
+<meta name="author" content="GelatineScreams">
+<meta name="robots" content="index, follow">
+<meta name="language" content="English">
+<meta name="revisit-after" content="7 days">
+<link rel="canonical" href="https://therecanonlybe.one/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://therecanonlybe.one/">
+<meta property="og:title" content="The One File | Single HTML Network Topology Editor">
+<meta property="og:description" content="Map networks, smart homes, mind maps, infrastructure or anything with nodes and connections in a single HTML file. Enterprise encryption, 10,000+ icons, live monitoring. Works offline, no install, no dependencies.">
+<meta property="og:image" content="https://therecanonlybe.one/assets/theonefile.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="The One File">
+<meta property="og:locale" content="en_US">
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://therecanonlybe.one/">
+<meta property="twitter:title" content="The One File | Single HTML Network Topology Editor">
+<meta property="twitter:description" content="Map networks, smart homes, mind maps, infrastructure or anything with nodes and connections in a single HTML file. Enterprise encryption, 10,000+ icons, live monitoring. Works offline, no install, no dependencies.">
+<meta property="twitter:image" content="https://therecanonlybe.one/assets/theonefile.jpg">
+<meta name="theme-color" content="#08090c">
+<meta name="application-name" content="The One File">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "The One File",
+  "description": "A single HTML file network topology editor with enterprise encryption, 10,000+ icons, live monitoring, rack topologies, recording and replay. Works offline, opens anywhere, saves into itself.",
+  "url": "https://therecanonlybe.one/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (browser based)",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "GelatineScreams",
+    "url": "https://github.com/gelatinescreams"
+  },
+  "license": "https://unlicense.org/",
+  "softwareVersion": "4.1.5",
+  "downloadUrl": "https://github.com/gelatinescreams/The-One-File",
+  "screenshot": "https://therecanonlybe.one/assets/corporate-preview.gif",
+  "featureList": "Network topology editing, AES 256 GCM encryption, 10000+ icons, live ping monitoring, rack topologies, recording and replay, multi user collaboration, Docker deployment, offline first, zero dependencies"
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --accent: #d4a843;
+  --accent-bright: #ffd700;
+  --accent-secondary: #c0c8d4;
+  --accent-tertiary: #8a9bb5;
+  --accent-glow: rgba(212, 168, 67, 0.5);
+  --accent-dark: #b8922e;
+  --base: #08090c;
+  --steel: #0f1019;
+  --text: #f0f1f3;
+  --text-secondary: #c8ccd4;
+  --text-dim: #6b7a8c;
+  --border: rgba(212, 168, 67, 0.15);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--base);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(8, 9, 12, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  animation: nav-pulse 4s ease-in-out infinite;
+  padding: 0 2rem;
+}
+
+@keyframes nav-pulse {
+  0%, 100% { border-bottom-color: rgba(212, 168, 67, 0.1); }
+  50% { border-bottom-color: rgba(212, 168, 67, 0.35); }
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+.nav-brand svg { width: 28px; height: 28px; }
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover { color: var(--accent); }
+
+.btn-download-nav {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #000 !important;
+  padding: 8px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-download-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(212, 168, 67, 0.4);
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  padding: 6rem 2rem 4rem;
+}
+
+.hero-storm {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(212, 168, 67, 0.1) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 50% at 20% 30%, rgba(15, 16, 25, 0.8) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 80% 40%, rgba(15, 16, 25, 0.6) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 80% at 50% 100%, rgba(8, 9, 12, 1) 0%, transparent 70%),
+    linear-gradient(180deg, #0d0f18 0%, var(--base) 100%);
+  animation: storm-drift 20s ease-in-out infinite alternate;
+}
+
+@keyframes storm-drift {
+  0% { background-position: 0% 0%, 0% 0%, 100% 0%, 0% 100%, 0% 0%; }
+  100% { background-position: 5% 2%, 3% -2%, 97% 3%, 0% 100%, 0% 0%; }
+}
+
+.hero-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 20%, rgba(212, 168, 67, 0.06), transparent 70%);
+  opacity: 0;
+  animation: lightning-flash 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lightning-flash {
+  0%, 92%, 100% { opacity: 0; }
+  93% { opacity: 1; }
+  94% { opacity: 0.1; }
+  95% { opacity: 0.7; }
+  96% { opacity: 0; }
+}
+
+.lightning-bolt {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lightning-bolt svg {
+  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.6)) drop-shadow(0 0 20px rgba(212, 168, 67, 0.3));
+}
+
+.lightning-bolt-1 { top: 5%; left: 12%; opacity: 0; animation: bolt-strike 8s 2s infinite; }
+.lightning-bolt-2 { top: 8%; right: 15%; opacity: 0; animation: bolt-strike 8s 5s infinite; transform: scaleX(-1); }
+.lightning-bolt-3 { top: 3%; left: 45%; opacity: 0; animation: bolt-strike 12s 0s infinite; }
+
+@keyframes bolt-strike {
+  0%, 90%, 100% { opacity: 0; }
+  91% { opacity: 0.9; }
+  92% { opacity: 0.1; }
+  93% { opacity: 0.7; }
+  95% { opacity: 0; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+}
+
+.hero-image {
+  margin: 0 auto 2rem;
+  width: 100%;
+  border-radius: 12px;
+  filter: drop-shadow(0 0 30px rgba(212, 168, 67, 0.3));
+  animation: hero-glow 4s ease-in-out infinite alternate;
+}
+
+@keyframes hero-glow {
+  0% { filter: drop-shadow(0 0 20px rgba(212, 168, 67, 0.2)); }
+  100% { filter: drop-shadow(0 0 40px rgba(212, 168, 67, 0.4)); }
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 6px;
+  line-height: 1.1;
+  text-shadow: 0 0 30px rgba(212, 168, 67, 0.3), 0 2px 4px rgba(0,0,0,0.5);
+  margin-bottom: 0.5rem;
+}
+
+.hero-tagline {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  font-style: italic;
+  color: var(--accent-secondary);
+  text-shadow: 0 0 20px rgba(212, 168, 67, 0.25);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.hero-desc {
+  font-size: 1.1rem;
+  color: var(--text);
+  max-width: 650px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.hero-btn-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 240px;
+}
+
+.hero-btn-group .btn-primary,
+.hero-btn-group .btn-outline,
+.hero-btn-group .btn-steel {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.btn-sub {
+  font-size: 0.75rem;
+  color: var(--accent-tertiary);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #0a0c12;
+  padding: 14px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s, box-shadow 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(212, 168, 67, 0.4);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--accent);
+  padding: 13px 31px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  border: 2px solid var(--accent);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background: rgba(212, 168, 67, 0.1);
+  box-shadow: 0 0 20px rgba(212, 168, 67, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-steel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #8a9bb5, #6b7a8c);
+  color: #0a0c12;
+  padding: 14px 32px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s, box-shadow 0.3s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-steel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(138, 155, 181, 0.4);
+}
+
+.hero-badge {
+  display: inline-block;
+  background: rgba(15, 16, 25, 0.8);
+  border: 1px solid var(--border);
+  padding: 8px 24px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.lightning-divider {
+  position: relative;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.lightning-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3) 20%, rgba(212, 168, 67, 0.3) 80%, transparent);
+}
+
+.bolt {
+  position: relative;
+  z-index: 1;
+  backface-visibility: hidden;
+  border-top: 26px solid #d4a843;
+  border-right: 8px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 12px solid #d4a843;
+  transform: skewX(-18deg) translate3d(0, 0, 0);
+  filter: drop-shadow(0 0 8px rgba(212, 168, 67, 0.6)) drop-shadow(0 0 20px rgba(212, 168, 67, 0.3));
+  animation: bolt-glow 3s ease-in-out infinite alternate;
+}
+
+.bolt::before {
+  content: '';
+  display: block;
+  position: absolute;
+  backface-visibility: hidden;
+  left: -4px;
+  top: -6px;
+  border-left: 14px solid #d4a843;
+  border-bottom: 30px solid transparent;
+  transform: skewY(-16deg) rotate(6deg) translate3d(0, 0, 0);
+}
+
+@keyframes bolt-glow {
+  0% { filter: drop-shadow(0 0 4px rgba(212, 168, 67, 0.4)) drop-shadow(0 0 12px rgba(212, 168, 67, 0.15)); }
+  100% { filter: drop-shadow(0 0 12px rgba(212, 168, 67, 0.7)) drop-shadow(0 0 30px rgba(212, 168, 67, 0.35)); }
+}
+
+section { padding: 5rem 2rem; }
+
+.container { max-width: 1200px; margin: 0 auto; }
+
+.section-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(212, 168, 67, 0.2);
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.gallery-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(15, 16, 25, 0.6), rgba(15, 16, 25, 0.3));
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.gallery-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 40px rgba(212, 168, 67, 0.15);
+}
+
+.gallery-card img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+}
+
+.gallery-card figcaption {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent-secondary);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2rem;
+}
+
+.lightbox-overlay.active { display: flex; }
+
+.lightbox-overlay img {
+  max-width: 95%;
+  max-height: 95vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 60px rgba(212, 168, 67, 0.2);
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  color: #fff;
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 10000;
+  background: none;
+  border: none;
+  font-weight: 300;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.lightbox-close:hover { opacity: 1; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.feature-card {
+  background: linear-gradient(135deg, rgba(15, 16, 25, 0.5), rgba(15, 16, 25, 0.2));
+  border: 1px solid rgba(212, 168, 67, 0.08);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(212, 168, 67, 0.06), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.feature-card:hover {
+  border-color: rgba(212, 168, 67, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.feature-card:hover::after { opacity: 1; }
+
+.feature-card h3 {
+  color: #e8e8e8;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.feature-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-tertiary);
+  background: rgba(138, 155, 181, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+}
+
+.editions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.edition-card {
+  background: linear-gradient(180deg, rgba(15, 16, 25, 0.7), rgba(15, 16, 25, 0.3));
+  border: 1px solid rgba(212, 168, 67, 0.12);
+  border-radius: 14px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.4s;
+  position: relative;
+  overflow: hidden;
+}
+
+.edition-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top center, rgba(212, 168, 67, 0.04), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+.edition-card:hover::before { opacity: 1; }
+
+.edition-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+
+.edition-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(212, 168, 67, 0.06) 50%, transparent 60%);
+  transition: none;
+  animation: none;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.edition-card:hover::after {
+  opacity: 1;
+  animation: quickening 0.8s ease-out;
+}
+
+@keyframes quickening {
+  0% { transform: translate(-30%, -30%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translate(30%, 30%); opacity: 0; }
+}
+
+.edition-card.featured {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(212, 168, 67, 0.06), rgba(15, 16, 25, 0.5));
+  box-shadow: 0 0 30px rgba(212, 168, 67, 0.1);
+}
+
+.edition-card.featured .edition-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #0a0c12;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 100px;
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.edition-badge { display: none; }
+
+.edition-name {
+  font-size: 1.6rem;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.edition-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-secondary);
+  margin-bottom: 0.5rem;
+  font-style: italic;
+  letter-spacing: 0.5px;
+}
+
+.edition-desc {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.edition-features {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.edition-features li {
+  padding: 6px 0;
+  font-size: 0.88rem;
+  color: var(--text);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.edition-features li::before {
+  content: '\2713';
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.btn-edition {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  transition: all 0.3s;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+}
+
+.btn-edition:hover {
+  background: rgba(212, 168, 67, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(212, 168, 67, 0.2);
+}
+
+.edition-card.featured .btn-edition {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #0a0c12;
+  border-color: transparent;
+}
+
+.edition-card.featured .btn-edition:hover {
+  box-shadow: 0 4px 25px rgba(212, 168, 67, 0.5);
+}
+
+.comparison-wrapper {
+  margin-top: 3rem;
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.comparison-table th {
+  background: rgba(212, 168, 67, 0.08);
+  color: var(--accent);
+  font-weight: 700;
+  padding: 12px 16px;
+  text-align: left;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(212, 168, 67, 0.06);
+  color: var(--text-secondary);
+}
+
+.comparison-table tr:nth-child(even) td {
+  background: rgba(212, 168, 67, 0.02);
+}
+
+.comparison-table .check { color: var(--accent); font-weight: 700; }
+
+.docker-section {
+  background: linear-gradient(180deg, transparent, rgba(15, 16, 25, 0.3), transparent);
+}
+
+.docker-block {
+  max-width: 700px;
+  margin: 0 auto;
+  background: rgba(8, 9, 12, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.docker-header {
+  background: rgba(212, 168, 67, 0.06);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.docker-header span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.docker-copy {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.docker-copy:hover { background: rgba(212, 168, 67, 0.1); }
+
+.docker-code {
+  padding: 1.5rem;
+  font-family: 'Cascadia Code', 'Fira Code', 'SF Mono', Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: #c8ccd4;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.docker-code .cmd { color: var(--accent); }
+.docker-code .flag { color: var(--accent-secondary); }
+.docker-code .str { color: #8bc34a; }
+.docker-code .comment { color: #5a6070; }
+
+.docker-link {
+  display: block;
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--accent-secondary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.docker-link:hover { color: var(--accent); }
+
+.demos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.demo-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(15, 16, 25, 0.5), rgba(15, 16, 25, 0.2));
+  border: 1px solid rgba(212, 168, 67, 0.12);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.demo-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(212, 168, 67, 0.15);
+}
+
+.demo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(212, 168, 67, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+
+.demo-info { flex: 1; }
+
+.demo-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.demo-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8e8e8;
+}
+
+.demo-arrow {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  transition: transform 0.3s, color 0.3s;
+}
+
+.demo-card:hover .demo-arrow {
+  transform: translateX(4px);
+  color: var(--accent);
+}
+
+.footer {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.footer-brand {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-tagline {
+  font-style: italic;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.footer-links a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.footer-links a:hover { color: var(--accent); }
+
+.footer-credits {
+  color: #4a4f5e;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.github-sidebar {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.github-sidebar a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 16, 25, 0.9);
+  border: 1px solid var(--border);
+  border-right: none;
+  color: var(--accent-secondary);
+  text-decoration: none;
+  transition: background 0.3s, color 0.3s;
+}
+
+.github-sidebar a:first-child {
+  border-radius: 8px 0 0 0;
+}
+
+.github-sidebar a:last-child {
+  border-radius: 0 0 0 8px;
+}
+
+.github-sidebar a:hover {
+  background: rgba(212, 168, 67, 0.15);
+  color: var(--accent);
+}
+
+.github-sidebar svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+@media (max-width: 768px) {
+  .github-sidebar {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .github-sidebar a {
+    flex: 1;
+    max-width: 80px;
+    height: 40px;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+  }
+  .github-sidebar a:first-child { border-radius: 0; }
+  .github-sidebar a:last-child { border-radius: 0; border-right: none; }
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: rgba(8, 9, 12, 0.98);
+    padding: 1.5rem 2rem;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-toggle { display: block; }
+  .preview-grid, .features-grid { grid-template-columns: 1fr 1fr; }
+  .editions-grid { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: 1fr 1fr; }
+  .hero { min-height: auto; padding: 5rem 1.25rem 2.5rem; }
+  .hero-image { max-width: 100%; }
+  .hero h1 { letter-spacing: 3px; font-size: 2.5rem; }
+  .hero-tagline { font-size: 1rem; margin-bottom: 1rem; }
+  .hero-desc { font-size: 0.95rem; margin-bottom: 1.5rem; }
+  .hero-buttons { gap: 1rem; flex-direction: column; align-items: center; }
+  .hero-btn-group { max-width: 100%; min-width: 0; width: 100%; }
+  .hero-btn-group .btn-primary,
+  .hero-btn-group .btn-outline,
+  .hero-btn-group .btn-steel { width: 100%; padding: 14px 20px; }
+  section { padding: 2.5rem 1.25rem; }
+  .section-title { font-size: 1.75rem; margin-bottom: 0.75rem; }
+  .section-subtitle { font-size: 0.95rem; margin-bottom: 2rem; }
+  .lightning-bolt-1, .lightning-bolt-2 { display: none; }
+  .lightning-divider { height: 50px; }
+  .comparison-table { font-size: 0.8rem; }
+  .comparison-table th, .comparison-table td { padding: 8px 10px; }
+  .demos-grid { grid-template-columns: 1fr; }
+  .footer-links { flex-direction: column; gap: 1rem; }
+  .footer { padding-bottom: calc(3rem + 40px + env(safe-area-inset-bottom, 0px)); }
+  .lightbox-overlay { padding: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 4.5rem 1rem 2rem; }
+  .hero h1 { font-size: 2rem; letter-spacing: 2px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .gallery-grid { grid-template-columns: 1fr; }
+  .feature-card { padding: 1.25rem; }
+  .edition-card { padding: 1.5rem; }
+  .bolt { transform: skewX(-18deg) translate3d(0, 0, 0) scale(0.8); }
+}
+</style>
 </head>
 <body>
-  <div class="shell">
-    <svg class="lightning lightning-left" width="40" height="80" viewBox="0 0 40 80">
-      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" />
+
+<div class="github-sidebar">
+  <a href="https://github.com/gelatinescreams/The-One-File" target="_blank" rel="noopener" title="GitHub Repository">
+    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+  </a>
+  <a href="https://github.com/gelatinescreams/The-One-File" target="_blank" rel="noopener" title="Star on GitHub">
+    <svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+  </a>
+  <a href="https://github.com/gelatinescreams/The-One-File/fork" target="_blank" rel="noopener" title="Fork on GitHub">
+    <svg viewBox="0 0 16 16"><path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 100-1.5.75.75 0 000 1.5z"/></svg>
+  </a>
+</div>
+
+<div class="lightbox-overlay" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <img id="lightboxImg" src="" alt="Enlarged preview">
+</div>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="https://therecanonlybe.one" class="nav-brand">
+      THE ONE FILE
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">&#9776;</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#editions">Editions</a></li>
+      <li><a href="#demos">Demos</a></li>
+      <li><a href="#docker">Docker</a></li>
+      <li><a href="#" onclick="downloadFile('https://raw.githubusercontent.com/gelatinescreams/The-One-File/main/theonefile-networkening.html','theonefile-networkening.html');return false;" class="btn-download-nav">Download</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="hero" id="hero">
+  <div class="hero-storm"></div>
+  <div class="hero-flash"></div>
+
+  <div class="lightning-bolt lightning-bolt-1">
+    <svg width="40" height="200" viewBox="0 0 40 200" fill="none">
+      <path d="M20 0 L25 50 L35 48 L18 110 L28 108 L10 200 L15 105 L5 107 L22 47 L12 49 Z" fill="rgba(212,168,67,0.7)" stroke="rgba(255,230,150,0.4)" stroke-width="0.5"/>
     </svg>
-    <svg class="lightning lightning-right" width="40" height="80" viewBox="0 0 40 80">
-      <path d="M20 0 L25 30 L35 30 L15 50 L20 45 L25 55 L5 80 L15 50 L5 50 L20 25 L15 25 Z" />
+  </div>
+  <div class="lightning-bolt lightning-bolt-2">
+    <svg width="35" height="180" viewBox="0 0 35 180" fill="none">
+      <path d="M18 0 L22 40 L32 38 L15 100 L25 98 L8 180 L13 95 L3 97 L20 37 L10 39 Z" fill="rgba(212,168,67,0.6)" stroke="rgba(255,230,150,0.3)" stroke-width="0.5"/>
     </svg>
-
-    <div class="inner">
-      <header>
-        <div>
-          <div class="title-group">
-					  
-<svg class="sword-icon" width="44" height="24" viewBox="0 0 110 60">
-  <polygon points="40,30 105,26 110,30 105,34 40,30"/>
-  <rect x="45" y="28" width="50" height="4" opacity="0.25"/>
-  <rect x="34" y="14" width="8" height="32" rx="2"/>
-  <rect x="14" y="25" width="22" height="10" rx="3"/>
-  <ellipse cx="8" cy="30" rx="7" ry="8"/>
-</svg>
-			
-            <div>
-              <div class="title">The One File</div>
-             <div class="tagline">"In the End, there can be only one"</div>
-            </div>
-          </div>
-        </div>
-        <div class="header-controls">
-          <button id="theme-toggle" class="theme-toggle">Light Mode</button>
-          <div class="badge2">
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Download gelatinescreams/The-One-File on GitHub">See on Github</a>
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large" aria-label="Star gelatinescreams/The-One-File on GitHub">Star</a>
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/subscription" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-eye" data-size="large" aria-label="Watch gelatinescreams/The-One-File on GitHub">Watch</a>
-          </div>
-        </div>
-      </header>
-
-      <article id="readme" class="markdown-body">
-        Loading README.md…
-      </article>
-
-      <div id="status" class="status">
-        <span class="status-dot"></span>
-        <span>Fetching README from repository root.</span>
-      </div>
-    </div>
-	<div>
-          <div class="badge2">
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/archive/HEAD.zip" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" aria-label="Download gelatinescreams/The-One-File on GitHub">Download</a>
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large" aria-label="Star gelatinescreams/The-One-File on GitHub">Star</a>
-		  <a class="github-button" href="https://github.com/gelatinescreams/The-One-File/subscription" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-eye" data-size="large" aria-label="Watch gelatinescreams/The-One-File on GitHub">Watch</a>
-          </div>
-	</div>
+  </div>
+  <div class="lightning-bolt lightning-bolt-3">
+    <svg width="25" height="120" viewBox="0 0 25 120" fill="none">
+      <path d="M12 0 L15 30 L22 28 L10 70 L18 68 L5 120 L9 66 L2 68 L14 27 L7 29 Z" fill="rgba(212,168,67,0.5)" stroke="rgba(255,230,150,0.3)" stroke-width="0.5"/>
+    </svg>
   </div>
 
-  <script>
-    (function () {
-      "use strict";
+  <div class="hero-content">
+    <img src="assets/theonefile.jpg" alt="The One File" class="hero-image" id="heroImage">
+    <h1>THE ONE FILE</h1>
+    <p class="hero-tagline">In the End, there can be only one.</p>
+    <p class="hero-desc">There can only be One File. Map networks, smart homes, sports plays, mind maps, infrastructure or anything with nodes and connections. Animated zones, replay video export, enterprise encryption, full styling. Works offline, opens anywhere, saves into itself.</p>
+    <p class="hero-desc" style="font-size: 0.95rem; color: var(--text-secondary); margin-top: -1.5rem;">The Networkening edition adds live status monitoring and icons from selfh.st/icons, MDI, and Simple Icons. Still one file. TheOneFile Verse adds an easily deployable, Docker based, real time collaboration wrapper that enables multiple users to create, edit and share together.</p>
+    <div class="hero-buttons">
+      <div class="hero-btn-group">
+        <a href="#" onclick="downloadFile('https://raw.githubusercontent.com/gelatinescreams/The-One-File/main/the-one-file.html','the-one-file.html');return false;" class="btn-primary">Download Core</a>
+        <span class="btn-sub">Single HTML file. No install. No dependencies.</span>
+      </div>
+      <div class="hero-btn-group">
+        <a href="#" onclick="downloadFile('https://raw.githubusercontent.com/gelatinescreams/The-One-File/main/theonefile-networkening.html','theonefile-networkening.html');return false;" class="btn-outline">Download Networkening</a>
+        <span class="btn-sub">Single HTML file. No install. No dependencies.</span>
+        <span class="btn-sub">Adds web icons and live monitoring!</span>
+      </div>
+      <div class="hero-btn-group">
+        <a href="#docker" class="btn-steel">Deploy to Docker</a>
+        <span class="btn-sub">Adds multiplayer collaboration!</span>
+        <span class="btn-sub">Adds auto network scanning!</span>
+      </div>
+    </div>
+  </div>
+</section>
 
-      const readmeEl = document.getElementById("readme");
-      const statusEl = document.getElementById("status");
+<div class="lightning-divider">
+  <div class="bolt"></div>
+</div>
 
-      function setStatus(message, isError) {
-        if (!statusEl) return;
-        statusEl.textContent = "";
-        statusEl.classList.toggle("error", !!isError);
+<section id="gallery">
+  <div class="container">
+    <h2 class="section-title fade-in">Witness the Power</h2>
+    <div class="gallery-grid">
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/corporate-preview.gif" alt="Corporate network topology" loading="lazy">
+        <figcaption>Corporate Topology</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/homelab-preview.gif" alt="Homelab network topology" loading="lazy">
+        <figcaption>Homelab Layout</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/routing-preview.gif" alt="Routing visualization" loading="lazy">
+        <figcaption>Routing Visualization</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/mobilepreviews.jpg" alt="Mobile interface previews" loading="lazy">
+        <figcaption>Mobile Experience</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/corporate.png" alt="Corporate network static" loading="lazy">
+        <figcaption>Corporate Network</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/homelab.png" alt="Homelab network static" loading="lazy">
+        <figcaption>Homelab Network</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="assets/collab-preview.gif" alt="TheOneFile Verse collaboration preview" loading="lazy">
+        <figcaption>TheOneFile Verse Collaboration</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="https://github.com/user-attachments/assets/43196f4e-f6c4-4d9d-aae0-d311b2bf94ec" alt="TheOneFile Verse auto discovery" loading="lazy">
+        <figcaption>Verse Auto Discovery</figcaption>
+      </figure>
+      <figure class="gallery-card fade-in" onclick="openLightbox(this)">
+        <img src="https://github.com/user-attachments/assets/c47e1cea-dd33-47ac-ac62-cef7fe92e3a3" alt="TheOneFile Verse setup" loading="lazy">
+        <figcaption>Verse Network Scanner</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
 
-        const dot = document.createElement("span");
-        dot.className = "status-dot";
-        const text = document.createElement("span");
-        text.textContent = message;
+<div class="lightning-divider">
+  <div class="bolt"></div>
+</div>
 
-        statusEl.appendChild(dot);
-        statusEl.appendChild(text);
-      }
+<section id="features">
+  <div class="container">
+    <h2 class="section-title fade-in">Forged in Code</h2>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <h3>Zero Config</h3>
+        <p>No install, no setup, no dependencies. Zero coding knowledge required. Just open the file.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Enterprise Encryption</h3>
+        <p>AES 256 GCM with PBKDF2, 200,000 iterations. Browser native Web Crypto API. Zero server communication. Non recoverable by design.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Works Everywhere</h3>
+        <p>Chrome, Edge, Firefox, Safari desktop and mobile. Modern Android and iOS browsers. Offline first.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Canvas and Navigation</h3>
+        <p>Large zoomable and pannable workspace. Minimap with viewport tracking. Clear grid and boundary indicators. Right click context menu.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Draw Anywhere</h3>
+        <p>Add text labels, boxes, and custom lines to annotate your topology. Free draw mode with polylines, rectangles, and styled text.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Nodes and Shapes</h3>
+        <p>Multiple shapes for servers, routers, switches, firewalls, and clouds. Editable name, IP, role, tags, and notes. Resizable with full styling.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Rack Topologies</h3>
+        <p>Create rack nodes for physical server racks. Assign devices to specific U positions. Visual capacity indicator shows available vs used space.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Smart Connections</h3>
+        <p>Smart routed lines between nodes. Multiple links between devices. Direction arrows, custom width, color, labels, and port labels.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Layer System</h3>
+        <p>Physical, logical, security and application layers. Toggle visibility to focus on specific aspects of your topology.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Lock and Group</h3>
+        <p>Lock nodes to prevent accidental movement. Group related nodes to move them together. Visual indicators for both states.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Bulk Operations</h3>
+        <p>Multi select for batch operations. Bulk align, distribute, clone, delete, lock, and group. Desktop and mobile toolbars.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Full Keyboard Control</h3>
+        <p>Arrow key nudging for pixel perfect positioning. Tab cycling through nodes. Undo, redo, copy, paste, zoom, and more.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Mobile Optimized</h3>
+        <p>Completely rewritten mobile UI. Resizable footer with drag handle. Touch optimized controls. Double tap gestures. Responsive layout.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Recording and Replay</h3>
+        <p>Record topology changes in real time or step by step. Play back recordings. Export as animated video.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Save System</h3>
+        <p>Exports a brand new updated HTML file. All data embedded in the file. Optional AES 256 GCM encryption. No servers involved.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Live Monitoring <span class="feature-tag">Networkening</span></h3>
+        <p>Live status indicators on nodes. Manual or auto ping with configurable intervals. Status scheduling with timer and last run tracking.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>10,000+ Icons <span class="feature-tag">Networkening</span></h3>
+        <p>MDI, Simple Icons, and selfh.st icon libraries. Editable icon shapes on every node.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <h3>Real Time Collaboration <span class="feature-tag">Verse</span></h3>
+        <p>Multi user real time editing. Docker based deployment. Admin dashboard. Shared topology server with persistent storage.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-      async function loadReadme() {
-        try {
-          if (!window.marked || !window.DOMPurify) {
-            setStatus("Markdown renderer not ready.", true);
-            return;
-          }
+<div class="lightning-divider">
+  <div class="bolt"></div>
+</div>
 
-          setStatus("Loading README.md from github…", false);
+<section id="editions">
+  <div class="container">
+    <h2 class="section-title fade-in">The Gathering</h2>
+    <p class="section-subtitle fade-in">Choose your weapon. Claim your power.</p>
+    <div class="editions-grid">
+      <div class="edition-card fade-in">
+        <span class="edition-badge"></span>
+        <p class="edition-name">Core Edition</p>
+        <h3 class="edition-title">The Blade</h3>
+        <p class="edition-desc">Reliable. Essential. The foundation of every network.</p>
+        <ul class="edition-features">
+          <li>Drag and drop topology editor</li>
+          <li>AES 256 GCM encryption</li>
+          <li>Full keyboard navigation</li>
+          <li>Import and Export JSON, CSV, Markdown</li>
+          <li>Rack topology view</li>
+          <li>Connection routing</li>
+          <li>Layer system</li>
+          <li>Lock and group nodes</li>
+          <li>Bulk operations</li>
+          <li>Mobile responsive</li>
+          <li>Recording and replay</li>
+          <li>Offline only, no dependencies</li>
+        </ul>
+        <a href="#" onclick="downloadFile('https://raw.githubusercontent.com/gelatinescreams/The-One-File/main/the-one-file.html','the-one-file.html');return false;" class="btn-edition">Claim the Blade</a>
+      </div>
 
-          const response = await fetch("README.md", {
-            method: "GET",
-            cache: "no-cache",
-            headers: { "Accept": "text/plain, text/markdown;q=0.9,*/*;q=0.8" }
-          });
+      <div class="edition-card featured fade-in">
+        <span class="edition-badge">Recommended</span>
+        <p class="edition-name">Networkening Edition</p>
+        <h3 class="edition-title">The Claymore</h3>
+        <p class="edition-desc">The full arsenal. Everything Core has, and more.</p>
+        <ul class="edition-features">
+          <li>Everything in Core</li>
+          <li>10,000+ icons (MDI, Simple Icons, selfh.st)</li>
+          <li>Live ping monitoring</li>
+          <li>Auto status checking with configurable intervals</li>
+          <li>Per node ping enable and disable</li>
+          <li>Visual ping indicators with color coding</li>
+          <li>Advanced connection styles</li>
+          <li>Editable icon shapes on nodes</li>
+        </ul>
+        <a href="#" onclick="downloadFile('https://raw.githubusercontent.com/gelatinescreams/The-One-File/main/theonefile-networkening.html','theonefile-networkening.html');return false;" class="btn-edition">Claim the Claymore</a>
+      </div>
 
-          if (!response.ok) throw new Error("HTTP " + response.status);
+      <div class="edition-card fade-in">
+        <span class="edition-badge"></span>
+        <p class="edition-name">Verse Edition</p>
+        <h3 class="edition-title">The Alliance</h3>
+        <p class="edition-desc">Collaboration and team power. Deploy for everyone.</p>
+        <ul class="edition-features">
+          <li>Everything in Networkening</li>
+          <li>Real time multi user collaboration</li>
+          <li>Docker deployment</li>
+          <li>Shared topology server</li>
+          <li>Admin dashboard</li>
+          <li>Network auto discovery scanner</li>
+          <li>Persistent storage</li>
+          <li>QR code sharing</li>
+        </ul>
+        <a href="https://github.com/gelatinescreams/The-One-File/tree/main/theonefile_verse" class="btn-edition">Summon the Alliance</a>
+      </div>
+    </div>
 
-          const markdown = await response.text();
+    <div class="comparison-wrapper fade-in">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Core</th>
+            <th>Networkening</th>
+            <th>Verse</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>All core features</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Create, edit, save topologies</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Shapes, lines, styling</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>U slot rack topologies</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Add text labels anywhere</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Draw rectangles and boxes</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Free draw custom lines</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Keyboard shortcuts</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Encryption, export</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Bulk operations</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Multi select</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>AES 256 GCM encryption (optional)</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Live node search</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Per device styling</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Mobile optimized</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Offline only</td><td class="check">&#10003;</td><td></td><td class="check">&#10003;</td></tr>
+          <tr><td>No dependencies</td><td class="check">&#10003;</td><td></td><td class="check">&#10003;</td></tr>
+          <tr><td>MDI Icons</td><td></td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Simple Icons</td><td></td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>selfh.st icons</td><td></td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Auto status checking</td><td></td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Live ping and health status</td><td></td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+          <tr><td>Real time multi user collaboration</td><td></td><td></td><td class="check">&#10003;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
-          if (!markdown.trim()) {
-            readmeEl.textContent = "README.md is empty.";
-            setStatus("Loaded README.md (empty file).", false);
-            return;
-          }
+<div class="lightning-divider">
+  <div class="bolt"></div>
+</div>
 
-          if (typeof marked.setOptions === "function") {
-            marked.setOptions({ gfm: true, breaks: false, headerIds: true, mangle: false });
-          }
+<section id="docker" class="docker-section">
+  <div class="container">
+    <h2 class="section-title fade-in">Summon the Verse</h2>
+    <p class="section-subtitle fade-in">Deploy collaborative topology editing with a single command.</p>
+    <div class="docker-block fade-in">
+      <div class="docker-header">
+        <span>TERMINAL</span>
+        <button class="docker-copy" onclick="copyDocker()">Copy</button>
+      </div>
+      <div class="docker-code"><span class="comment"># Quick start</span>
+<span class="cmd">docker run</span> <span class="flag">-d</span> <span class="flag">-p</span> <span class="str">10101:10101</span> <span class="flag">-v</span> <span class="str">theonefile-data:/app/data</span> \
+  ghcr.io/gelatinescreams/theonefile_verse:latest</div>
+    </div>
 
-          const rawHtml = marked.parse(markdown);
-          const safeHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
+    <div class="docker-block fade-in" style="margin-top: 1.5rem;">
+      <div class="docker-header">
+        <span>DOCKER COMPOSE</span>
+        <button class="docker-copy" onclick="copyCompose()">Copy</button>
+      </div>
+      <div class="docker-code" id="composeCode"><span class="cmd">services</span>:
+  <span class="cmd">theonefile_verse</span>:
+    <span class="flag">image</span>: ghcr.io/gelatinescreams/theonefile_verse:latest
+    <span class="flag">ports</span>:
+      - <span class="str">"10101:10101"</span>
+    <span class="flag">volumes</span>:
+      - <span class="str">./data:/app/data</span>
+    <span class="flag">restart</span>: unless-stopped</div>
+    </div>
 
-          readmeEl.innerHTML = safeHtml;
-          setStatus("Readme.md loaded. Thank you GitHub", false);
-        } catch (err) {
-          console.error("Failed to load README:", err);
-          readmeEl.textContent = "Could not load README.md.";
-          setStatus("Error loading README.md, check github status", true);
-        }
-      }
+    <p class="fade-in" style="text-align: center; margin-top: 1rem; color: var(--text-dim); font-size: 0.9rem;">Then run: <code style="color: var(--accent); background: rgba(212,168,67,0.1); padding: 2px 8px; border-radius: 4px;">docker compose up -d</code> and open <code style="color: var(--accent); background: rgba(212,168,67,0.1); padding: 2px 8px; border-radius: 4px;">http://localhost:10101</code></p>
 
-      window.addEventListener("load", loadReadme);
-    })();
-  </script>
-  <script>
-    (() => {
-      "use strict";
+    <a href="https://github.com/gelatinescreams/The-One-File/tree/main/theonefile_verse" class="docker-link fade-in">More information on TheOneFile Verse &#8594;</a>
+  </div>
+</section>
 
-      const root = document.documentElement;
-      const toggleBtn = document.getElementById("theme-toggle");
+<div class="lightning-divider">
+  <div class="bolt"></div>
+</div>
 
-      const saved = localStorage.getItem("theme");
-      const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const current = saved || (systemDark ? "dark" : "light");
+<section id="demos">
+  <div class="container">
+    <h2 class="section-title fade-in">Enter the Arena</h2>
+    <p class="section-subtitle fade-in">Try it live. No download required.</p>
+    <div class="demos-grid">
+      <a href="https://therecanonlybe.one/demos/?version=core&demo=corporate" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9878;</div>
+        <div class="demo-info">
+          <div class="demo-label">Core</div>
+          <div class="demo-name">Corporation Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://therecanonlybe.one/demos/?version=core&demo=homelab" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9878;</div>
+        <div class="demo-info">
+          <div class="demo-label">Core</div>
+          <div class="demo-name">Homelab Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://therecanonlybe.one/demos/?version=networkening&demo=corporate" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9876;</div>
+        <div class="demo-info">
+          <div class="demo-label">Networkening</div>
+          <div class="demo-name">Corporate Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://therecanonlybe.one/demos/?version=networkening&demo=homelab" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9876;</div>
+        <div class="demo-info">
+          <div class="demo-label">Networkening</div>
+          <div class="demo-name">Homelab Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://multiverse.therecanonlybe.one/s/2ab95062-9d96-4e32-b373-d1994c210d82" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9733;</div>
+        <div class="demo-info">
+          <div class="demo-label">Verse</div>
+          <div class="demo-name">Live Collaboration Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://multiverse.therecanonlybe.one" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9733;</div>
+        <div class="demo-info">
+          <div class="demo-label">Verse</div>
+          <div class="demo-name">Landing Page</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+      <a href="https://therecanonlybe.one/theonefile_verse/demo-admin.html" target="_blank" rel="noopener" class="demo-card fade-in">
+        <div class="demo-icon">&#9733;</div>
+        <div class="demo-info">
+          <div class="demo-label">Verse</div>
+          <div class="demo-name">Admin Demo</div>
+        </div>
+        <span class="demo-arrow">&#8594;</span>
+      </a>
+    </div>
+  </div>
+</section>
 
-      root.setAttribute("data-theme", current);
-      updateBtn(current);
+<footer class="footer">
+  <div class="lightning-divider" style="margin-bottom: 2rem;">
+    <div class="bolt"></div>
+  </div>
+  <div class="footer-brand">The One File</div>
 
-      toggleBtn.addEventListener("click", () => {
-        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        root.setAttribute("data-theme", next);
-        localStorage.setItem("theme", next);
-        updateBtn(next);
-      });
+  <div class="footer-links">
+    <a href="https://github.com/gelatinescreams/The-One-File" target="_blank" rel="noopener">GitHub</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#features">Features</a>
+    <a href="#editions">Editions</a>
+    <a href="#demos">Demos</a>
+    <a href="#docker">Docker</a>
+  </div>
+  <p class="footer-credits">
+    Released under the Unlicense. Free as in freedom.<br>
+    Icon support powered by: <a href="https://selfh.st/icons/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">selfh.st/icons</a> |
+    <a href="https://pictogrammers.com/library/mdi/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Material Design Icons</a> |
+    <a href="https://simpleicons.org/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Simple Icons</a><br>
+    Special thank you to <a href="https://advsys.net/ken/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Ken Silverman</a> for the programming spark. Thank you to Tim Berners-Lee and all icon creators and maintainers.
+  </p>
+</footer>
 
-      function updateBtn(theme) {
-        toggleBtn.textContent = theme === "dark" ? "Light Mode" : "Dark Mode";
-      }
-    })();
-  </script>
+<script>
+
+document.getElementById('navToggle').addEventListener('click', function() {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+
+document.querySelectorAll('.nav-links a').forEach(function(link) {
+  link.addEventListener('click', function() {
+    document.getElementById('navLinks').classList.remove('open');
+  });
+});
+
+
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-in').forEach(function(el) {
+  observer.observe(el);
+});
+
+
+function downloadFile(url, filename) {
+  fetch(url)
+    .then(function(r) { return r.blob(); })
+    .then(function(blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    });
+}
+
+
+function copyDocker() {
+  var text = 'docker run -d -p 10101:10101 -v theonefile-data:/app/data ghcr.io/gelatinescreams/theonefile_verse:latest';
+  navigator.clipboard.writeText(text).then(function() {
+    event.target.textContent = 'Copied!';
+    setTimeout(function() { event.target.textContent = 'Copy'; }, 2000);
+  });
+}
+
+function copyCompose() {
+  var text = 'services:\n  theonefile_verse:\n    image: ghcr.io/gelatinescreams/theonefile_verse:latest\n    ports:\n      - "10101:10101"\n    volumes:\n      - ./data:/app/data\n    restart: unless-stopped';
+  navigator.clipboard.writeText(text).then(function() {
+    event.target.textContent = 'Copied!';
+    setTimeout(function() { event.target.textContent = 'Copy'; }, 2000);
+  });
+}
+
+
+function openLightbox(card) {
+  var img = card.querySelector('img');
+  var overlay = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lightboxImg');
+  lbImg.src = img.src;
+  lbImg.alt = img.alt;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+document.getElementById('lightbox').addEventListener('click', function(e) {
+  if (e.target === this || e.target === document.getElementById('lightboxClose')) {
+    this.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});
+
+document.getElementById('lightboxClose').addEventListener('click', function() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.body.style.overflow = '';
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});
+</script>
+
+
 </body>
 </html>
