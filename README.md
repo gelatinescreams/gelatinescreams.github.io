@@ -2,7 +2,7 @@
   <img src="https://img.shields.io/badge/License-Unlicense-576169?style=for-the-badge&labelColor=01284b" alt="License: Unlicense">
   <img src="https://img.shields.io/badge/TheOneFile-4.1.5-blue" alt="TheOneFile 4.1.5">
   <a href="https://github.com/gelatinescreams/The-One-File/tree/main/theonefile_verse">
-  <img src="https://img.shields.io/badge/TheOneFile_Verse-1.9.0-blue" alt="TheOneFile_Verse Docker Version 1.9.0">
+  <img src="https://img.shields.io/badge/TheOneFile_Verse-2.0.0-blue" alt="TheOneFile_Verse Docker Version 2.0.0">
   </a>
 </p>
 
@@ -16,6 +16,10 @@ There can only be One File. Map networks, smart homes, sports plays, mind maps, 
 
 ![The One File corporate preview](assets/corporate-preview.gif) ![The One File routing preview](assets/routing-preview.gif) ![The One File homelab preview](assets/homelab-preview.gif) ![The One File mobile previews](assets/mobilepreviews.jpg)
 
+### TheOneFile_Verse /\ 2.0.0 6-6-26 : That 2.0 Glow
+* **Thank you to everyone who has/will use. Thank you to everyone who has helped in every way**
+  * See [TheOneFile_Verse changelog](theonefile_verse/changelog.md) for full 2.0.0 list
+
 ### Version 4.1.5 /\ 3-26-26 : Enhanced 'Create', UI polish and squashing a sneaky bug and TheOneFile_Verse 1.8.6
 * **Enhanced Create**
   * Added more options to the Create New Node & Rack modals.
@@ -26,9 +30,6 @@ There can only be One File. Map networks, smart homes, sports plays, mind maps, 
   * Fixed Assigned Rack dropdown snapping back to "None" after changing in the edit Node and Rack sidebar/footer
   * See [Changelog](changelog.md) for full update details
 
-### TheOneFile_Verse /\ 1.8.6 3-26-26 : Further improvements to Network Auto Discovery scanner/editor one page setup
-  * Very close to a stable 2.0
-  * See [TheOneFile_Verse changelog](theonefile_verse/changelog.md) for full 1.8.6 list
 
 <img width="1525" height="770" alt="Screenshot 2026-03-11 094906" src="https://github.com/user-attachments/assets/43196f4e-f6c4-4d9d-aae0-d311b2bf94ec" />
 <img width="1521" height="770" alt="Screenshot 2026-03-11 094937" src="https://github.com/user-attachments/assets/c47e1cea-dd33-47ac-ac62-cef7fe92e3a3" />  
@@ -42,7 +43,7 @@ There can only be One File. Map networks, smart homes, sports plays, mind maps, 
   * [Networkening: Corporate Demo](https://therecanonlybe.one/demos/?version=networkening&demo=corporate)
   * [Networkening: Homelab Demo](https://therecanonlybe.one/demos/?version=networkening&demo=homelab)
 * **TheOneFile_Verse Edition** 
-  * [TheOneFile_Verse online demo](https://multiverse.therecanonlybe.one/s/2ab95062-9d96-4e32-b373-d1994c210d82)
+  * [TheOneFile_Verse online demo](https://multiverse.therecanonlybe.one/s/0388e827-e374-435a-bea1-8702db394e73)
   * *join from different browsers to see real time changes*
   * [TheOneFile_Verse landing page](https://multiverse.therecanonlybe.one) 
   * [TheOneFile_Verse admin demo](https://therecanonlybe.one/theonefile_verse/demo-admin.html) 

@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/License-Unlicense-576169?style=for-the-badge&labelColor=01284b" alt="License: Unlicense">
   <img src="https://img.shields.io/badge/TheOneFile-4.1.5-blue" alt="TheOneFile 4.1.5">
   <a href="https://github.com/gelatinescreams/The-One-File/tree/main/theonefile_verse">
-  <img src="https://img.shields.io/badge/TheOneFile_Verse-1.9.0-blue" alt="Docker Version 1.9.0">
+  <img src="https://img.shields.io/badge/TheOneFile_Verse-2.0.0-blue" alt="Docker Version 2.0.0">
   </a>
 </p>
 
@@ -20,7 +20,7 @@ When you're done collaborating, each person can save their own portable copy. Th
 
 Rooms auto save your work, no manual exports required. Admins can run as many rooms as needed, a multiOneFileverse of parallel diagrams. Host it privately or open it to the internet (use tons of caution and a secure reverse proxy).
 
-* [TheOneFile_Verse online demo](https://multiverse.therecanonlybe.one/s/2ab95062-9d96-4e32-b373-d1994c210d82)
+* [TheOneFile_Verse online demo](https://multiverse.therecanonlybe.one/s/0388e827-e374-435a-bea1-8702db394e73)
 * *join from different browsers to see real time changes*
 * [TheOneFile_Verse landing page](https://multiverse.therecanonlybe.one)
 * [TheOneFile_Verse admin demo](https://therecanonlybe.one/theonefile_verse/demo-admin.html)
@@ -63,15 +63,15 @@ All settings are configured via the admin panel at `/admin`. On first run, you'l
 | `DATA_DIR` | `./data` | Where settings and room data are stored |
 | `REDIS_URL` | | Optional Redis connection for scaling |
 | `CORS_ORIGIN` | | Comma separated list of allowed origins |
-| `REQUIRE_WS_TOKEN` | `false` | Require WebSocket session tokens |
-| `TRUSTED_PROXY_COUNT` | | Number of trusted reverse proxies for X Forwarded For |
-| `TRUSTED_PROXIES` | | Comma separated list of trusted proxy IPs |
+| `REQUIRE_WS_TOKEN` | `true` | Require WebSocket session tokens. Set to `false` only for trusted local testing |
+| `TRUSTED_PROXY_COUNT` | `0` | Number of trusted reverse proxies. Defaults to 0, meaning X Forwarded For is ignored and the real socket address is used. Set this when running behind a reverse proxy so client IPs are read correctly |
+| `TRUSTED_PROXIES` | | Comma separated list of trusted proxy IPs. When set, the client IP is the first address that is not in this list |
 | `DEBUG_OIDC` | `false` | Enable OIDC debug logging (dev only) |
 
 
 ### TheOneFile_Verse Features
-* **Current Version 1.9.0 BETA 2** **Production ready hierarchical architecture + fixes**
-  * See [changelog](changelog.md) for full 1.9.0 list of changes
+* **Current Version 2.0.0**
+  * See [changelog](changelog.md) for the full 2.0.0 list of changes
 
 #### Core Collaboration
 * Realtime sync via WebSocket
@@ -108,7 +108,7 @@ All settings are configured via the admin panel at `/admin`. On first run, you'l
 * New probe types: ICMP ping, TCP port check, HTTP/HTTPS, DNS and Multi Probe (all combined)
 * Custom user ports
   
-#### etwork Discovery
+#### Network Discovery
 * Added "Discover Network Hosts" button to settings panel under Auto Status Checking section (at the bottom)
 * Full subnet discovery with CIDR range input and preset common ranges
 * Multiple range support
